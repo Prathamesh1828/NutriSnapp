@@ -1,0 +1,127 @@
+/* ✅ Tailwind v4 — single import only, fonts must be SEPARATE in layout.tsx */
+/* Replace @import "tailwindcss" with v3 directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@theme inline {
+  --color-brand-dark: #0A0A0F;
+  --color-brand-surface: #13131A;
+  --color-brand-accent: #B8FF3C;
+  --color-brand-glow: #10b981;
+  --color-brand-secondary: #f97316;
+  --color-background: #0A0A0F;
+  --color-foreground: #ffffff;
+  --font-sans: 'Inter', sans-serif;
+  --font-display: 'Inter', sans-serif;
+  --shadow-glow: 0 0 20px rgba(184, 255, 60, 0.3);
+  --shadow-glow-teal: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+/* ===== RESET ===== */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: #0A0A0F !important;
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== GLASS ===== */
+.glass-panel {
+  background: rgba(19, 19, 26, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.neon-border {
+  border: 1px solid rgba(184, 255, 60, 0.4);
+  box-shadow: 0 0 15px rgba(184, 255, 60, 0.15);
+}
+
+.teal-border {
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+}
+
+/* ===== GRADIENT TEXT ===== */
+.gradient-text {
+  background: linear-gradient(135deg, #B8FF3C, #10b981);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ===== BUTTONS ===== */
+.btn-glow {
+  background: #B8FF3C;
+  color: #0A0A0F;
+  box-shadow: 0 0 20px rgba(184, 255, 60, 0.4);
+  transition: all 0.2s ease;
+}
+.btn-glow:hover {
+  box-shadow: 0 0 35px rgba(184, 255, 60, 0.6);
+  transform: translateY(-1px);
+}
+
+/* ===== CARD ===== */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(184, 255, 60, 0.3); }
+  50%       { box-shadow: 0 0 30px rgba(184, 255, 60, 0.6); }
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0; }
+  40%           { opacity: 1; }
+}
+
+.animate-fade-in    { animation: fadeIn 0.4s ease forwards; }
+.animate-slide-up   { animation: slideUp 0.5s ease forwards; }
+.animate-slide-in   { animation: slideIn 0.4s ease forwards; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+.animate-marquee    { animation: marquee 20s linear infinite; }
+
+.typing-dot:nth-child(1) { animation: blink 1.4s infinite 0s; }
+.typing-dot:nth-child(2) { animation: blink 1.4s infinite 0.2s; }
+.typing-dot:nth-child(3) { animation: blink 1.4s infinite 0.4s; }
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0A0A0F; }
+::-webkit-scrollbar-thumb { background: rgba(184, 255, 60, 0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(184, 255, 60, 0.6); }
+
+/* ===== SELECTION ===== */
+::selection { background: rgba(184, 255, 60, 0.25); color: #fff; }
+
+/* ===== FOCUS ===== */
+.focus-ring:focus-visible { outline: 2px solid #B8FF3C; outline-offset: 2px; }
