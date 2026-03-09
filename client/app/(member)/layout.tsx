@@ -9,7 +9,7 @@ const NAV_MAIN = [
     { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
     { label: "Analyze Meal", icon: Camera, href: "/analyze-meal" },
     { label: "Recipes", icon: BookOpen, href: "/recipes" },
-    { label: "Workouts", icon: Dumbbell, href: "/workouts" },
+    { label: "Workouts", icon: Dumbbell, href: "/workout" },
     { label: "Physique AI", icon: Eye, href: "/physique-ai" },
     { label: "AI Coach", icon: MessageCircle, href: "/coach" },
     { label: "Messages", icon: MessageCircle, href: "/messages" },

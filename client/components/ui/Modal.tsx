@@ -43,32 +43,34 @@ export default function Modal({ open, onClose, title, children, size = 'md', cla
                         className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50"
                         onClick={onClose}
                     />
-                    {/* Modal */}
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        transition={{ duration: 0.2, ease: 'easeOut' }}
-                        className={cn(
-                            'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50',
-                            'w-full px-4'
-                        )}
-                    >
-                        <div className={cn('glass-panel rounded-2xl w-full mx-auto neon-border', sizes[size], className)}>
-                            {title && (
-                                <div className="flex items-center justify-between p-6 border-b border-white/[0.06]">
-                                    <h2 className="text-lg font-semibold text-white">{title}</h2>
-                                    <button
-                                        onClick={onClose}
-                                        className="text-white/40 hover:text-white transition-colors"
-                                    >
-                                        <X size={20} />
-                                    </button>
-                                </div>
+                    {/* Modal Wrapper */}
+                    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none p-4 sm:p-6">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            transition={{ duration: 0.2, ease: 'easeOut' }}
+                            className={cn(
+                                'w-full pointer-events-auto',
+                                sizes[size]
                             )}
-                            <div className="p-6">{children}</div>
-                        </div>
-                    </motion.div>
+                        >
+                            <div className={cn('glass-panel rounded-3xl w-full mx-auto neon-border overflow-hidden', className)}>
+                                {title && (
+                                    <div className="flex items-center justify-between p-6 border-b border-white/[0.06]">
+                                        <h2 className="text-lg font-semibold text-white">{title}</h2>
+                                        <button
+                                            onClick={onClose}
+                                            className="text-white/40 hover:text-white transition-colors"
+                                        >
+                                            <X size={20} />
+                                        </button>
+                                    </div>
+                                )}
+                                <div className="p-6 flex-1 overflow-y-auto min-h-0 custom-scrollbar">{children}</div>
+                            </div>
+                        </motion.div>
+                    </div>
                 </>
             )}
         </AnimatePresence>
