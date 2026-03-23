@@ -29,7 +29,7 @@ export default function ForgotPasswordPage() {
             <nav className="flex items-center justify-between px-6 h-14 border-b border-white/[0.06]">
                 <Link href="/" className="flex items-center gap-2">
                     <Diamond size={18} className="text-[#B8FF3C]" fill="currentColor" />
-                    <span className="font-black text-white text-lg tracking-tight">MacroSnap</span>
+                    <span className="font-black text-white text-lg tracking-tight">NutriSnap</span>
                 </Link>
                 <Link
                     href="/login"
@@ -117,7 +117,7 @@ export default function ForgotPasswordPage() {
 
             {/* Footer */}
             <footer className="px-6 py-5 border-t border-white/[0.04] flex flex-col sm:flex-row items-center justify-between gap-3">
-                <p className="text-white/20 text-xs">© 2026 MacroSnap Inc. All rights reserved. Secure password recovery system.</p>
+                <p className="text-white/20 text-xs">© 2026 NutriSnap Inc. All rights reserved. Secure password recovery system.</p>
                 <div className="flex gap-5 text-white/25 text-xs">
                     {['Privacy Policy', 'Terms of Service', 'Contact Support'].map(l => (
                         <a key={l} href="#" className="hover:text-white/50 transition-colors">{l}</a>

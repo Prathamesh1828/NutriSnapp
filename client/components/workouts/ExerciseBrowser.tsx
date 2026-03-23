@@ -1,178 +1,271 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { wgerApi, Exercise, Category, Muscle } from '@/lib/wgerApi';
+import { useState, useEffect, useRef } from 'react';
+import { workoutApi } from '@/lib/workoutApi';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-import { Search, Loader2 } from 'lucide-react';
+import { Search, Loader2, Info, ChevronDown, X, SlidersHorizontal, Plus } from 'lucide-react';
 
 interface ExerciseBrowserProps {
-    onSelect: (exerciseId: number) => void;
-    categoryId?: number;
+    onSelectAction: (exerciseId: string) => void;
 }
 
-export default function ExerciseBrowser({ onSelect, categoryId }: ExerciseBrowserProps) {
-    const [exercises, setExercises] = useState<Exercise[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [muscles, setMuscles] = useState<Muscle[]>([]);
+// ── Inline dropdown for filters ────────────────────────────────────────────────
+function FilterDropdown({
+    label,
+    options,
+    value,
+    onChange,
+}: {
+    label: string;
+    options: string[];
+    value: string;
+    onChange: (v: string) => void;
+}) {
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
 
-    const [loading, setLoading] = useState(true);
-    const [loadingMore, setLoadingMore] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-
-    const [selectedCategory, setSelectedCategory] = useState<number | undefined>(categoryId);
-    const [selectedMuscle, setSelectedMuscle] = useState<number | undefined>(undefined);
-
-    const [offset, setOffset] = useState(0);
-    const [hasMore, setHasMore] = useState(true);
-    const LIMIT = 20;
-
-    // Load Metadata
     useEffect(() => {
-        async function loadMetadata() {
-            try {
-                const [catRes, musRes] = await Promise.all([
-                    wgerApi.fetchCategories(),
-                    wgerApi.fetchMuscles()
-                ]);
-                setCategories(catRes.results || []);
-                setMuscles(musRes.results || []);
-            } catch (err) {
-                console.error("Failed to load metadata", err);
-            }
-        }
-        loadMetadata();
+        const handler = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
     }, []);
 
-    // Fetch Exercises
-    const fetchExercisesList = useCallback(async (isLoadMore = false) => {
-        try {
-            if (isLoadMore) setLoadingMore(true);
-            else setLoading(true);
-
-            const res = await wgerApi.fetchExercises(LIMIT, isLoadMore ? offset : 0, selectedCategory, selectedMuscle);
-
-            const newExercises = res.results || [];
-            if (isLoadMore) {
-                setExercises(prev => [...prev, ...newExercises]);
-            } else {
-                setExercises(newExercises);
-                setOffset(0);
-            }
-
-            setHasMore(!!res.next);
-        } catch (err) {
-            console.error("Failed to fetch exercises", err);
-        } finally {
-            setLoading(false);
-            setLoadingMore(false);
-        }
-    }, [offset, selectedCategory, selectedMuscle]);
-
-    // Refetch when filters change
-    useEffect(() => {
-        fetchExercisesList(false);
-    }, [selectedCategory, selectedMuscle, fetchExercisesList]);
-
-    // Filter existing list locally for fast search, but API search is better if wger supported it well.
-    // Wger doesn't have a simple text search query param in the base endpoint without translations, 
-    // so we'll do local filtering on loaded items for a simple implementation.
-    const filteredExercises = exercises.filter(ex =>
-        ex.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    const handleLoadMore = () => {
-        setOffset(prev => prev + LIMIT);
-        // The effect or manual call will trigger next page
-    };
-
-    useEffect(() => {
-        if (offset > 0) {
-            fetchExercisesList(true);
-        }
-    }, [offset, fetchExercisesList]);
-
-    // Helpers
-    const getCategoryName = (id: number) => categories.find(c => c.id === id)?.name || 'Unknown';
+    const displayLabel = value
+        ? value.charAt(0).toUpperCase() + value.slice(1)
+        : label;
 
     return (
-        <div className="flex flex-col h-[60vh] max-h-[600px]">
-            <div className="flex flex-col gap-4 mb-4 flex-shrink-0">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Search exercises (local)"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
+        <div ref={ref} className="relative flex-1">
+            <button
+                onClick={() => setOpen((o) => !o)}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-sm transition-all ${value
+                        ? 'bg-[#B8FF3C]/10 border-[#B8FF3C]/40 text-[#B8FF3C]'
+                        : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
+                    }`}
+            >
+                <span className="truncate font-semibold capitalize">{displayLabel}</span>
+                <div className="flex items-center gap-1 shrink-0 ml-1">
+                    {value && (
+                        <span
+                            className="p-0.5 rounded hover:bg-[#B8FF3C]/20 transition-colors"
+                            onClick={(e) => { e.stopPropagation(); onChange(''); }}
+                        >
+                            <X size={12} />
+                        </span>
+                    )}
+                    <ChevronDown
+                        size={14}
+                        className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
                     />
                 </div>
+            </button>
 
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-                    <select
-                        className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-[#B8FF3C] min-w-[140px]"
-                        value={selectedCategory || ''}
-                        onChange={(e) => setSelectedCategory(e.target.value ? Number(e.target.value) : undefined)}
+            {open && (
+                <div className="absolute top-full mt-1.5 left-0 right-0 z-50 bg-[#0D0D14] border border-slate-700 rounded-xl shadow-2xl max-h-52 overflow-y-auto py-1">
+                    <button
+                        onClick={() => { onChange(''); setOpen(false); }}
+                        className="w-full text-left px-3 py-2 text-xs font-bold text-slate-500 hover:bg-slate-800 transition-colors capitalize"
                     >
-                        <option value="">All Categories</option>
-                        {categories.map(c => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                    </select>
+                        All
+                    </button>
+                    {options.map((opt) => (
+                        <button
+                            key={opt}
+                            onClick={() => { onChange(opt); setOpen(false); }}
+                            className={`w-full text-left px-3 py-2 text-xs font-semibold capitalize transition-colors ${value === opt
+                                    ? 'text-[#B8FF3C] bg-[#B8FF3C]/10'
+                                    : 'text-slate-300 hover:bg-slate-800'
+                                }`}
+                        >
+                            {opt}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
 
-                    <select
-                        className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-cyan-500 min-w-[140px]"
-                        value={selectedMuscle || ''}
-                        onChange={(e) => setSelectedMuscle(e.target.value ? Number(e.target.value) : undefined)}
+// ── Main component ─────────────────────────────────────────────────────────────
+export default function ExerciseBrowser({ onSelectAction }: ExerciseBrowserProps) {
+    const [exercises, setExercises] = useState<any[]>([]);
+    const [bodyParts, setBodyParts] = useState<string[]>([]);
+    const [targets, setTargets] = useState<string[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedBodyPart, setSelectedBodyPart] = useState('');
+    const [selectedTarget, setSelectedTarget] = useState('');
+    const [showFilters, setShowFilters] = useState(false);
+
+    useEffect(() => {
+        async function loadInitialData() {
+            try {
+                setLoading(true);
+                const [bpRes, tarRes, exRes] = await Promise.all([
+                    workoutApi.fetchBodyParts(),
+                    workoutApi.fetchMuscles(),
+                    workoutApi.fetchExercises(),
+                ]);
+                setBodyParts(bpRes.data || []);
+                setTargets(tarRes.data || []);
+                setExercises(exRes.data || []);
+            } catch (err) {
+                console.error('Failed to load exercises', err);
+            } finally {
+                setLoading(false);
+            }
+        }
+        loadInitialData();
+    }, []);
+
+    const filteredExercises = exercises.filter((ex) => {
+        const matchesSearch = ex.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesBodyPart = !selectedBodyPart || ex.bodyPart === selectedBodyPart;
+        const matchesTarget = !selectedTarget || ex.target === selectedTarget;
+        return matchesSearch && matchesBodyPart && matchesTarget;
+    });
+
+    const activeFilterCount = [selectedBodyPart, selectedTarget].filter(Boolean).length;
+
+    return (
+        <div className="flex flex-col h-[75vh] max-h-[720px]">
+            {/* ── Search + filter bar ──────────────────── */}
+            <div className="flex flex-col gap-2 sm:gap-3 mb-3 sm:mb-4 shrink-0">
+                {/* Search row */}
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <Search
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+                            size={16}
+                        />
+                        <input
+                            type="text"
+                            placeholder="Search exercises…"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-[#B8FF3C] transition-colors placeholder:text-slate-600"
+                        />
+                    </div>
+
+                    {/* Mobile filter toggle */}
+                    <button
+                        onClick={() => setShowFilters((o) => !o)}
+                        className={`sm:hidden flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm font-bold transition-all ${activeFilterCount > 0
+                                ? 'bg-[#B8FF3C]/10 border-[#B8FF3C]/40 text-[#B8FF3C]'
+                                : 'bg-slate-900 border-slate-700 text-slate-400'
+                            }`}
                     >
-                        <option value="">All Muscles</option>
-                        {muscles.map(m => (
-                            <option key={m.id} value={m.id}>{m.name_en || m.name}</option>
-                        ))}
-                    </select>
+                        <SlidersHorizontal size={15} />
+                        {activeFilterCount > 0 && (
+                            <span className="w-4 h-4 rounded-full bg-[#B8FF3C] text-[#0A0A0F] text-[9px] font-black flex items-center justify-center">
+                                {activeFilterCount}
+                            </span>
+                        )}
+                    </button>
+                </div>
+
+                {/* Filter dropdowns — always visible on desktop, toggled on mobile */}
+                <div className={`${showFilters ? 'flex' : 'hidden'} sm:flex gap-2`}>
+                    <FilterDropdown
+                        label="Body Part"
+                        options={bodyParts}
+                        value={selectedBodyPart}
+                        onChange={setSelectedBodyPart}
+                    />
+                    <FilterDropdown
+                        label="Target Muscle"
+                        options={targets}
+                        value={selectedTarget}
+                        onChange={setSelectedTarget}
+                    />
+                    {activeFilterCount > 0 && (
+                        <button
+                            onClick={() => { setSelectedBodyPart(''); setSelectedTarget(''); }}
+                            className="shrink-0 px-3 py-2 rounded-xl bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700 hover:border-slate-500 transition-all whitespace-nowrap"
+                        >
+                            Clear
+                        </button>
+                    )}
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto pr-2 flex flex-col gap-3 custom-scrollbar">
+            {/* ── Results list ─────────────────────────── */}
+            <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-2 sm:gap-3 custom-scrollbar">
                 {loading ? (
-                    <div className="flex items-center justify-center h-full text-cyan-500">
-                        <Loader2 size={32} className="animate-spin" />
+                    <div className="flex flex-col items-center justify-center h-full text-[#B8FF3C] gap-4">
+                        <Loader2 size={36} className="animate-spin" />
+                        <span className="text-slate-500 text-xs animate-pulse font-mono uppercase tracking-widest">
+                            Hydrating Library…
+                        </span>
                     </div>
                 ) : filteredExercises.length === 0 ? (
-                    <div className="text-center text-slate-500 py-10">No exercises found. Try changing filters.</div>
-                ) : (
-                    filteredExercises.map(ex => (
-                        <Card
-                            key={ex.id}
-                            variant="default"
-                            padding="sm"
-                            className="flex justify-between items-center bg-slate-900/50 hover:bg-slate-800 transition-colors cursor-pointer group border border-transparent hover:border-cyan-500/30"
-                            onClick={() => onSelect(ex.id)}
+                    <div className="text-center py-16 border-2 border-dashed border-slate-800 rounded-3xl">
+                        <Info size={28} className="mx-auto text-slate-700 mb-3" />
+                        <p className="text-slate-500 text-sm">No exercises match your filters.</p>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => { setSearchQuery(''); setSelectedBodyPart(''); setSelectedTarget(''); }}
+                            className="mt-2 text-cyan-400 text-xs"
                         >
-                            <div>
-                                <h4 className="font-semibold text-slate-200 group-hover:text-cyan-400 transition-colors">{ex.name}</h4>
-                                <div className="text-xs text-slate-500 mt-1 flex gap-2">
-                                    <span className="bg-white/5 px-2 rounded-md">{getCategoryName(ex.category)}</span>
-                                    {ex.muscles.length > 0 && <span className="bg-cyan-500/10 text-cyan-400 px-2 rounded-md">{ex.muscles.length} Primary Muscles</span>}
-                                </div>
-                            </div>
-                            <Button size="sm" variant="outline" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                Add
-                            </Button>
-                        </Card>
-                    ))
-                )}
+                            Clear Filters
+                        </Button>
+                    </div>
+                ) : (
+                    <>
+                        <div className="text-[10px] text-slate-500 uppercase tracking-widest px-1 mb-2">
+                            {filteredExercises.length} movements found
+                        </div>
+                        <div className="flex flex-col gap-2 pb-6">
+                            {filteredExercises.slice(0, 200).map((ex) => (
+                                <div
+                                    key={ex.id || ex.name}
+                                    onClick={() => onSelectAction(ex.id)}
+                                    className="flex items-center gap-4 p-3 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-[#B8FF3C]/40 hover:bg-slate-800/60 transition-all cursor-pointer group"
+                                >
+                                    {/* GIF thumbnail with loading fallback */}
+                                    <div className="w-16 h-16 bg-white rounded-xl overflow-hidden shrink-0 border border-slate-800 shadow-inner flex items-center justify-center">
+                                        <img
+                                            src={ex.gifUrl || '/placeholder-exercise.png'}
+                                            alt={ex.name}
+                                            className="w-full h-full object-contain mix-blend-multiply transition-opacity opacity-90 group-hover:opacity-100"
+                                            referrerPolicy="no-referrer"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).src = 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3ZhcHoxZGZ4ZzB6Z3Z4ZzB6Z3Z4ZzB6Z3Z4ZzB6Z3Z4ZzB6Z3Z4JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKDkDbIDJieKbVm/giphy.gif'; // Generic fitness placeholder
+                                                (e.target as HTMLImageElement).className = 'w-10 h-10 object-contain opacity-20';
+                                            }}
+                                        />
+                                    </div>
 
-                {hasMore && !loading && (
-                    <Button
-                        variant="ghost"
-                        onClick={handleLoadMore}
-                        loading={loadingMore}
-                        className="mt-2 text-[#B8FF3C] hover:text-[#B8FF3C] hover:bg-[#B8FF3C]/10"
-                    >
-                        Load More Exercises
-                    </Button>
+                                    <div className="flex-1 min-w-0 pr-2">
+                                        <h4 className="font-bold text-slate-100 group-hover:text-[#B8FF3C] transition-colors truncate capitalize text-sm mb-1 line-clamp-1">
+                                            {ex.name}
+                                        </h4>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            <span className="text-[9px] uppercase tracking-widest bg-slate-800 text-slate-500 px-2 py-0.5 rounded-lg border border-slate-700">
+                                                {ex.bodyPart}
+                                            </span>
+                                            <span className="text-[9px] uppercase tracking-widest bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded-lg border border-cyan-500/20">
+                                                {ex.target}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="shrink-0 w-8 h-8 rounded-full bg-slate-800/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Plus size={14} className="text-[#B8FF3C]" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {filteredExercises.length > 200 && (
+                            <div className="text-center py-4 text-slate-600 font-mono text-[10px] uppercase tracking-[0.3em] border-t border-slate-800/50 mt-2">
+                                Top 200 of {filteredExercises.length} shown
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>

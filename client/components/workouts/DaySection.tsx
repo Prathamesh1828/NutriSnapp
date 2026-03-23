@@ -7,20 +7,20 @@ import { useState } from 'react';
 import ExerciseCard from './ExerciseCard';
 
 export interface DaySetting {
-    id: number;
-    exercise: number; // Base exercise ID
+    id: string | number;
+    exercise: string | number;
     sets: number;
     exerciseName?: string;
     categoryName?: string;
 }
 
 interface DaySectionProps {
-    id: number;
+    id: string | number;
     description: string;
     settings: DaySetting[];
-    onAddExercise: (dayId: number) => void;
-    onRemoveExercise: (setId: number) => void;
-    onDeleteDay: (dayId: number) => void;
+    onAddExerciseAction: (dayId: any) => void;
+    onRemoveExerciseAction: (setId: any) => void;
+    onDeleteDayAction: (dayId: any) => void;
     isDeletingDay?: boolean;
 }
 
@@ -28,72 +28,92 @@ export default function DaySection({
     id,
     description,
     settings,
-    onAddExercise,
-    onRemoveExercise,
-    onDeleteDay,
-    isDeletingDay
+    onAddExerciseAction,
+    onRemoveExerciseAction,
+    onDeleteDayAction,
+    isDeletingDay,
 }: DaySectionProps) {
+    // Default collapsed on mobile (small screens), expanded on desktop
     const [isExpanded, setIsExpanded] = useState(true);
 
     return (
-        <Card variant="glass" padding="md" className="flex flex-col gap-4 !bg-slate-900 border border-slate-800 shadow-[0_0_15px_rgba(0,0,0,0.5)]">
-            <div className="flex items-center justify-between cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400">
-                        <Calendar size={18} />
+        <Card
+            variant="glass"
+            padding="md"
+            className="flex flex-col gap-0 !bg-[#0A0A0F] border border-slate-800 shadow-[0_4px_30px_rgba(0,0,0,0.4)] transition-all overflow-hidden group"
+        >
+            {/* ── Header row ──────────────────────────── */}
+            <div
+                className="flex items-center justify-between cursor-pointer py-1"
+                onClick={() => setIsExpanded(!isExpanded)}
+            >
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-xl bg-[#B8FF3C]/10 flex items-center justify-center text-[#B8FF3C] group-hover:scale-105 transition-transform border border-[#B8FF3C]/20">
+                        <Calendar size={16} />
                     </div>
-                    <h3 className="text-lg font-bold text-slate-100">{description || `Day ${id}`}</h3>
-                    <span className="text-sm text-slate-500 bg-slate-800 px-2 py-1 rounded-md ml-2">
-                        {settings.length} Exercises
-                    </span>
+                    <div className="flex flex-col min-w-0">
+                        <h3 className="text-sm sm:text-lg font-bold text-slate-100 group-hover:text-[#B8FF3C] transition-colors truncate">
+                            {description || `Day ${id}`}
+                        </h3>
+                        <span className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-widest font-black">
+                            {settings.length} Exercise{settings.length !== 1 ? 's' : ''}
+                        </span>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                {/* Actions */}
+                <div className="flex items-center gap-1 sm:gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => onDeleteDay(id)}
+                        onClick={() => onDeleteDayAction(id)}
                         loading={isDeletingDay}
-                        className="text-red-400 hover:bg-red-500/20"
+                        className="text-red-500/50 hover:text-red-400 hover:bg-red-500/10 h-8 px-2"
                         aria-label="Delete Day"
                     >
-                        <Trash2 size={16} />
+                        <Trash2 size={15} />
                     </Button>
                     <button
                         onClick={() => setIsExpanded(!isExpanded)}
-                        className="p-2 text-slate-500 hover:text-cyan-400"
+                        className="p-1.5 sm:p-2 text-slate-600 hover:text-[#B8FF3C] transition-colors"
                     >
-                        {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                     </button>
                 </div>
             </div>
 
+            {/* ── Expandable body ──────────────────────── */}
             {isExpanded && (
-                <div className="flex flex-col gap-3 mt-2 pl-4 border-l-2 border-cyan-500/20">
+                <div className="flex flex-col gap-2 sm:gap-3 mt-3 sm:mt-4 pl-3 sm:pl-4 border-l-2 border-[#B8FF3C]/20">
                     {settings.map((setting) => (
                         <ExerciseCard
                             key={setting.id}
                             id={setting.exercise}
                             setId={setting.id}
                             name={setting.exerciseName || `Exercise ${setting.exercise}`}
-                            categoryName={setting.categoryName || 'Unknown Category'}
+                            categoryName={setting.categoryName || 'General'}
                             sets={setting.sets}
-                            onRemove={onRemoveExercise}
+                            onRemoveAction={onRemoveExerciseAction}
                         />
                     ))}
 
                     {settings.length === 0 && (
-                        <div className="py-8 text-center text-slate-500 border border-dashed border-slate-700 rounded-xl bg-slate-800/50">
-                            No exercises added to this day yet.
+                        <div className="py-8 sm:py-12 text-center text-slate-600 border border-dashed border-slate-800 rounded-3xl bg-slate-900/30 font-medium text-sm">
+                            No exercises added to this training block.
                         </div>
                     )}
 
                     <Button
                         variant="outline"
-                        className="w-full mt-2 border-dashed border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/10"
-                        onClick={() => onAddExercise(id)}
+                        fullWidth
+                        className="mt-3 sm:mt-4 border-dashed border-slate-700 bg-slate-900/50 text-[#B8FF3C] hover:bg-[#B8FF3C] hover:text-[#0A0A0F] transition-all py-4 sm:py-6 rounded-2xl group"
+                        onClick={() => onAddExerciseAction(id)}
                     >
-                        <Plus size={16} className="mr-2" /> Add Exercise to Day
+                        <Plus
+                            size={18}
+                            className="mr-2 group-hover:rotate-90 transition-transform duration-300"
+                        />
+                        <span className="font-bold tracking-tight text-sm">ADD EXERCISE</span>
                     </Button>
                 </div>
             )}

@@ -6,8 +6,8 @@ import Providers from '@/components/shared/Providers';
 
 export const metadata: Metadata = {
   title: {
-    default: 'MacroSnap — AI Fitness & Nutrition',
-    template: '%s | MacroSnap',
+    default: 'NutriSnap — AI Fitness & Nutrition',
+    template: '%s | NutriSnap',
   },
   description: 'AI-powered nutrition tracking, workout generation, and fitness coaching app.',
   keywords: ['nutrition', 'fitness', 'AI', 'meal analysis', 'workout', 'coaching'],

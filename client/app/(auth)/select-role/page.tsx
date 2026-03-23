@@ -49,7 +49,7 @@ export default function RoleSelector() {
                     <Zap size={18} className="text-[#0A0A0F]" fill="currentColor" />
                 </div>
                 <div>
-                    <div className="font-black text-white text-base tracking-tight leading-none">MacroSnap</div>
+                    <div className="font-black text-white text-base tracking-tight leading-none">NutriSnap</div>
                     <div className="text-[10px] text-slate-500 tracking-[0.15em] uppercase font-medium mt-0.5">Precision Nutrition</div>
                 </div>
             </header>
@@ -63,7 +63,7 @@ export default function RoleSelector() {
                             Who are you?
                         </h1>
                         <p className="text-slate-400 text-sm sm:text-base">
-                            Choose your journey to get started with MacroSnap
+                            Choose your journey to get started with NutriSnap
                         </p>
                     </div>
 
@@ -190,7 +190,7 @@ export default function RoleSelector() {
 
             {/* Footer */}
             <footer className="text-center pb-6 text-slate-600 text-xs">
-                © 2024 MacroSnap. All rights reserved.
+                © 2024 NutriSnap. All rights reserved.
             </footer>
         </div>
     );

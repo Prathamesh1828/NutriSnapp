@@ -71,7 +71,7 @@ function Sidebar({
                             <Zap size={16} className="text-[#0A0A0F]" fill="currentColor" />
                         </div>
                         <div className={`transition-all duration-300 overflow-hidden whitespace-nowrap ${collapsed ? "lg:w-0 lg:opacity-0" : "opacity-100"}`}>
-                            <p className="font-black text-white text-sm leading-none">MacroSnap</p>
+                            <p className="font-black text-white text-sm leading-none">NutriSnap</p>
                             <p className="text-[9px] text-[#B8FF3C] tracking-widest uppercase font-bold mt-0.5">AI Fitness Coach</p>
                         </div>
                     </div>

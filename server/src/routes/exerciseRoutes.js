@@ -3,6 +3,16 @@ const exerciseDbService = require('../services/exerciseDbService');
 
 const router = express.Router();
 
+// Get all exercises (highly cached)
+router.get('/', async (req, res) => {
+    try {
+        const data = await exerciseDbService.getExercises();
+        res.json({ success: true, data });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 // Get list of body parts
 router.get('/bodyparts', async (req, res) => {
     try {

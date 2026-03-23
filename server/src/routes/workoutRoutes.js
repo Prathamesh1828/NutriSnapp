@@ -17,7 +17,7 @@ router.post('/generate', async (req, res) => {
         res.json({ success: true, data: plan });
     } catch (err) {
         console.error('Generation Error:', err);
-        res.status(500).json({ success: false, error: 'Failed to generate workout plan' });
+        res.status(500).json({ success: false, error: `Generation failed: ${err.message}` });
     }
 });
 

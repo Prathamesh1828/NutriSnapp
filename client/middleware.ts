@@ -16,12 +16,12 @@ export async function middleware(request: NextRequest) {
     (path) => pathname === path || pathname.startsWith('/api/auth')
   );
 
-  // Allow API routes and static assets
+  // Allow API routes, static assets, and images with extensions
   if (
     pathname.startsWith('/api/') ||
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon') ||
-    pathname.startsWith('/public')
+    pathname.includes('.') || // Allows files like logo.png, video.mp4 etc
+    pathname.startsWith('/favicon')
   ) {
     return NextResponse.next();
   }

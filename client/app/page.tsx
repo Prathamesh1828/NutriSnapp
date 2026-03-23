@@ -71,10 +71,8 @@ function Navbar() {
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           className="flex items-center gap-2"
         >
-          <div className="w-7 h-7 bg-[#B8FF3C] rounded-md flex items-center justify-center">
-            <Zap size={14} className="text-[#0A0A0F]" fill="currentColor" />
-          </div>
-          <span className="font-black text-white text-lg tracking-tight">MacroSnap</span>
+          <img src="/logo.png" alt="NutriSnap Logo" className="w-8 h-8 object-contain" />
+          <span className="font-black text-white text-lg tracking-tight">NutriSnap</span>
         </button>
 
         {/* Desktop links */}
@@ -146,9 +144,7 @@ function Hero() {
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-[#B8FF3C]/10 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
-        <div className="inline-flex items-center gap-2 border border-white/10 rounded-full px-4 py-1.5 mb-8 bg-white/5 backdrop-blur-sm">
-          <span className="w-2 h-2 bg-[#B8FF3C] rounded-full animate-pulse" />
-          <span className="text-xs text-slate-400 font-medium tracking-wide">TRUSTED BY 50,000+ ATHLETES</span>
+        <div className="inline-flex items-center gap-2  rounded-full px-4 py-1.5 mb-8">
         </div>
 
         <h1 className="text-6xl md:text-8xl font-black tracking-tight leading-none mb-4 text-white">
@@ -227,6 +223,48 @@ function Hero() {
 
       <div className="w-full">
         <Marquee />
+      </div>
+    </section>
+  );
+}
+
+// ─── Video Showcase ──────────────────────────────────────────────────────────
+function VideoShowcase() {
+  const videos = [
+    { src: "/video1.mp4", title: "Smart Recognition" },
+    { src: "/video2.mp4", title: "Elite Coaching" },
+    { src: "/video3.mp4", title: "Progress Tracking" }
+  ];
+
+  return (
+    <section className="bg-[#0A0A0F] py-28 px-6 border-y border-white/5">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-black text-white mb-4">See NutriSnap in <span className="text-[#B8FF3C]">Action</span></h2>
+          <p className="text-slate-500 max-w-2xl mx-auto leading-relaxed">
+            Experience the future of fitness technology. Watch how our AI integrates seamlessly into your daily routine.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          {videos.map((vid, i) => (
+            <div key={i} className="group relative rounded-[2rem] overflow-hidden border border-white/5 bg-slate-900/50 aspect-[9/16] shadow-2xl">
+              <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-700"
+              >
+                <source src={vid.src} type="video/mp4" />
+              </video>
+              <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-[#0A0A0F] to-transparent">
+                <h3 className="text-white font-black text-xl mb-1 tracking-tight">{vid.title}</h3>
+                <div className="w-8 h-1 bg-[#B8FF3C] rounded-full scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -323,7 +361,7 @@ function PhysiqueSpotlight() {
               <span className="text-[#B8FF3C]">self.</span>
             </h2>
             <p className="text-slate-400 leading-relaxed mb-8">
-              Stop guessing if your hard work is paying off. MacroSnap&apos;s Generative AI
+              Stop guessing if your hard work is paying off. NutriSnap&apos;s Generative AI
               analyses your current progression and visualises your physique 3 months from now.
             </p>
             <ul className="space-y-3 mb-10">
@@ -361,17 +399,40 @@ function PhysiqueSpotlight() {
 
 // ─── Stats ────────────────────────────────────────────────────────────────────
 function Stats() {
+  const [stats, setStats] = useState({
+    totalPeople: 0,
+    mealsLogged: 0,
+    workoutsCreated: 0
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stats`);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const result = await res.json();
+        if (result.success) {
+          setStats(result.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch stats:", err);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  const data = [
+    { val: stats.totalPeople.toString(), label: "PEOPLE ON BOARD" },
+    { val: stats.mealsLogged.toString(), label: "MEALS TRACKED" },
+    { val: stats.workoutsCreated.toString(), label: "PLANS BUILT" },
+  ];
+
   return (
     <section className="bg-[#0A0A0F] py-20 px-6 border-y border-white/5">
-      <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-        {[
-          { val: "50K+", label: "ACTIVE USERS" },
-          { val: "2M+", label: "MEALS LOGGED" },
-          { val: "98%", label: "AI ACCURACY" },
-          { val: "4.9", label: "APP RATING" },
-        ].map(({ val, label }) => (
+      <div className="max-w-7xl mx-auto flex flex-wrap justify-center gap-12 md:gap-24 text-center">
+        {data.map(({ val, label }) => (
           <div key={label}>
-            <div className="text-5xl md:text-6xl font-black text-[#B8FF3C] mb-2">{val}</div>
+            <div className="text-5xl md:text-7xl font-black text-[#B8FF3C] mb-2">{val}</div>
             <div className="text-xs text-slate-500 tracking-widest font-bold">{label}</div>
           </div>
         ))}
@@ -536,9 +597,9 @@ function Pricing() {
 // ─── FAQ ──────────────────────────────────────────────────────────────────────
 const FAQS = [
   { q: "How accurate is the photo recognition?", a: "Our AI is trained on over 10 million food images and verified by real dietitians. It achieves a 98% accuracy rate on common foods and even identifies complex multi-ingredient recipes." },
-  { q: "Does it work with my Apple Watch or Garmin?", a: "Yes, MacroSnap syncs with Apple Health, Google Fit, Garmin Connect, and most major fitness trackers to combine your activity data with nutrition insights." },
+  { q: "Does it work with my Apple Watch or Garmin?", a: "Yes, NutriSnap syncs with Apple Health, Google Fit, Garmin Connect, and most major fitness trackers to combine your activity data with nutrition insights." },
   { q: "How does Physique Projection work?", a: "You upload a current photo, set your goal (cut, bulk, or recomp) and timeframe. Our AI generates a realistic visualisation of your projected physique based on your current stats and adherence." },
-  { q: "Can I use it for keto or vegan diets?", a: "Absolutely. MacroSnap supports any dietary approach including keto, vegan, vegetarian, carnivore, and custom macro ratios. You can set your own targets manually or let AI calculate them." },
+  { q: "Can I use it for keto or vegan diets?", a: "Absolutely. NutriSnap supports any dietary approach including keto, vegan, vegetarian, carnivore, and custom macro ratios. You can set your own targets manually or let AI calculate them." },
 ];
 
 function FAQ() {
@@ -629,10 +690,8 @@ function Footer() {
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
               className="flex items-center gap-2 mb-4"
             >
-              <div className="w-7 h-7 bg-[#B8FF3C] rounded-md flex items-center justify-center">
-                <Zap size={14} className="text-[#0A0A0F]" fill="currentColor" />
-              </div>
-              <span className="font-black text-white text-lg tracking-tight">MacroSnap</span>
+              <img src="/logo.png" alt="NutriSnap Logo" className="w-8 h-8 object-contain" />
+              <span className="font-black text-white text-lg tracking-tight">NutriSnap</span>
             </button>
             <p className="text-slate-500 text-sm leading-relaxed mb-6">
               AI-powered nutrition tracking and physique transformation for serious athletes.
@@ -664,7 +723,7 @@ function Footer() {
         </div>
 
         <div className="border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-slate-600 text-xs">© 2026 MacroSnap. All rights reserved.</p>
+          <p className="text-slate-600 text-xs">© 2026 NutriSnap. All rights reserved.</p>
           <div className="flex gap-6 text-slate-600 text-xs">
             {["Privacy Policy", "Terms of Service", "Cookie Policy"].map(l => (
               <a key={l} href="#" className="hover:text-slate-400 transition-colors">{l}</a>
@@ -684,6 +743,7 @@ export default function LandingPage() {
       <Hero />
       <Features />
       <HowItWorks />
+      <VideoShowcase />
       <PhysiqueSpotlight />
       <Stats />
       <Testimonials />

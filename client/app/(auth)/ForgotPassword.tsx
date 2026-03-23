@@ -34,7 +34,7 @@ export default function ForgotPassword() {
                 {/* Logo */}
                 <div className="text-center mb-12">
                     <div className="inline-flex items-center gap-3 bg-gradient-to-r from-emerald-400 to-green-500 bg-clip-text text-transparent text-4xl font-black mx-auto">
-                        🗂️ MacroSnap
+                        🗂️ NutriSnap
                     </div>
                 </div>
 

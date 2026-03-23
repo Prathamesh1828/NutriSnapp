@@ -74,9 +74,7 @@ export default function CoachSidebar() {
             {/* Logo */}
             <div className={cn("p-6 border-b border-white/[0.06] flex items-center h-[88px] transition-all", isCollapsed ? "justify-center px-0" : "")}>
                 <Link href="/coach/dashboard" className="flex items-center gap-2.5 overflow-hidden">
-                    <div className="w-8 h-8 rounded-xl bg-[#10b981] flex items-center justify-center flex-shrink-0">
-                        <Zap size={18} className="text-[#0A0A0F]" fill="currentColor" />
-                    </div>
+                    <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain flex-shrink-0" />
                     <AnimatePresence>
                         {!isCollapsed && (
                             <motion.div

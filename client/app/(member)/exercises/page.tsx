@@ -65,7 +65,7 @@ function getWgerImage(ex: ExerciseInfo): string | null {
     return (ex.images.find(i => i.is_main) || ex.images[0])?.image || null;
 }
 
-// ── Theme colors matching MacroSnap ───────────────────────────────
+// ── Theme colors matching NutriSnap ───────────────────────────────
 // Background: #0f1117  Cards: #1a1d27  Border: #2a2d3a  Accent: #a3e635 (lime)
 const THEME = {
     bg: '#0f1117',

@@ -61,7 +61,7 @@ function ResetPasswordForm() {
             <nav className="flex items-center justify-between px-6 h-14 border-b border-white/[0.06]">
                 <Link href="/" className="flex items-center gap-2">
                     <Diamond size={18} className="text-[#B8FF3C]" fill="currentColor" />
-                    <span className="font-black text-white text-lg tracking-tight">MacroSnap</span>
+                    <span className="font-black text-white text-lg tracking-tight">NutriSnap</span>
                 </Link>
                 <button className="w-8 h-8 bg-[#B8FF3C]/15 border border-[#B8FF3C]/20 rounded-full flex items-center justify-center text-[#B8FF3C] hover:bg-[#B8FF3C]/25 transition-colors">
                     <HelpCircle size={15} />
@@ -135,8 +135,8 @@ function ResetPasswordForm() {
                                     onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))}
                                     placeholder="••••••••••••"
                                     className={`w-full bg-[#162010]/60 border rounded-xl px-4 py-3.5 pr-11 text-white text-sm placeholder:text-white/25 focus:outline-none transition-colors ${form.confirm && !matches
-                                            ? 'border-red-500/40 focus:border-red-500/60'
-                                            : 'border-white/[0.08] focus:border-[#B8FF3C]/40'
+                                        ? 'border-red-500/40 focus:border-red-500/60'
+                                        : 'border-white/[0.08] focus:border-[#B8FF3C]/40'
                                         }`}
                                 />
                                 <button
@@ -176,7 +176,7 @@ function ResetPasswordForm() {
 
             {/* Footer */}
             <footer className="px-6 py-5 border-t border-white/[0.04] flex flex-col sm:flex-row items-center justify-between gap-3">
-                <p className="text-white/20 text-xs">© 2026 MacroSnap. All rights reserved.</p>
+                <p className="text-white/20 text-xs">© 2026 NutriSnap. All rights reserved.</p>
                 <div className="flex gap-5 text-white/25 text-xs">
                     {['Privacy Policy', 'Terms of Service', 'Contact Support'].map(l => (
                         <a key={l} href="#" className="hover:text-white/50 transition-colors">{l}</a>

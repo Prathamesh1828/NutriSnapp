@@ -13,6 +13,8 @@ const mealLogRoutes = require('./routes/mealLog');
 const chatRoutes = require('./routes/chat');
 const exerciseRoutes = require('./routes/exerciseRoutes');
 const workoutRoutes = require('./routes/workoutRoutes');
+const programsRoutes = require('./routes/programs');
+const statsRoutes = require('./routes/stats');
 const http = require('http');
 const { Server } = require('socket.io');
 
@@ -126,6 +128,8 @@ app.use('/api/meal-log', mealLogRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/exercises', exerciseRoutes);
 app.use('/api/workouts', workoutRoutes);
+app.use('/api/programs', programsRoutes);
+app.use('/api/stats', statsRoutes);
 
 const PORT = process.env.PORT || 5000;
 

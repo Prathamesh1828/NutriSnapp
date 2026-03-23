@@ -81,12 +81,12 @@ function RecipeCard({ recipe, onClick, isFavorite, onToggleFavorite }: {
                 <img src={recipe.image} alt={recipe.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-black/65 backdrop-blur-sm text-white text-xs font-black px-2.5 py-1 rounded-full">
-                    <Flame size={10} className="text-[#B8FF3C]" /> {Math.round(recipe.calories)} kcal
+                    <Flame size={10} className="text-[#B8FF3C]" /> {Math.round(recipe.calories || 0)} kcal
                 </div>
                 <div className="absolute top-2.5 right-2.5 flex items-center gap-2 bg-black/70 backdrop-blur-md text-white text-[10px] font-black px-3 py-1.5 rounded-full border border-white/5 shadow-lg">
                     <div className="flex items-center gap-1.5 border-r border-white/15 pr-2.5">
                         <Clock size={10} className="text-slate-400" /> 
-                        <span>{recipe.readyInMinutes}m</span>
+                        <span>{recipe.readyInMinutes || 0}m</span>
                     </div>
                     <div className="flex items-center gap-1.5 text-red-500 animate-pulse">
                         <Play size={8} fill="currentColor" /> 
@@ -186,10 +186,31 @@ export default function RecipesPage() {
         toggleFavoriteRecipe(recipe);
     };
 
-    const addToPlan = (recipe: Recipe, day: string) => {
+    const getFlattenedRecipe = (r: any): Recipe => {
+        // If it already has top-level macros, return as is
+        if (typeof r.protein === 'number') return r as Recipe;
+
+        // Otherwise, extract from nested nutrition object (common in detail view/random)
+        return {
+            id: r.id,
+            title: r.title,
+            image: r.image,
+            calories: typeof r.calories === 'number' ? r.calories : Math.round(r.nutrition?.calories?.amount || 0),
+            protein: typeof r.protein === 'number' ? r.protein : Math.round(r.nutrition?.protein?.amount || 0),
+            carbs: typeof r.carbs === 'number' ? r.carbs : Math.round(r.nutrition?.carbs?.amount || 0),
+            fat: typeof r.fat === 'number' ? r.fat : Math.round(r.nutrition?.fat?.amount || 0),
+            readyInMinutes: r.readyInMinutes || 0,
+            rating: r.rating || 4.5,
+            diets: r.diets || [],
+            videoUrl: r.videoUrl
+        };
+    };
+
+    const addToPlan = (recipe: any, day: string) => {
+        const flattened = getFlattenedRecipe(recipe);
         const newEntry: PlannedMeal = {
             id: Math.random().toString(36).substr(2, 9),
-            recipe,
+            recipe: flattened,
             day
         };
         addPlannedMeal(newEntry);

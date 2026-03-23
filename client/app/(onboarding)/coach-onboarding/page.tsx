@@ -411,7 +411,7 @@ export default function CoachOnboarding() {
                 <div className="w-8 h-8 bg-[#10b981] rounded-lg flex items-center justify-center">
                     <Zap size={14} className="text-white" fill="currentColor" />
                 </div>
-                <span className="font-black text-white tracking-tight">MacroSnap <span className="text-[#10b981] font-medium text-sm ml-1">Coach</span></span>
+                <span className="font-black text-white tracking-tight">NutriSnap <span className="text-[#10b981] font-medium text-sm ml-1">Coach</span></span>
             </header>
 
             <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 sm:py-12">

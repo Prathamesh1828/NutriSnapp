@@ -80,7 +80,7 @@ export default function RegisterPage() {
                 <div className="w-14 h-14 rounded-2xl bg-[#B8FF3C] flex items-center justify-center mb-3 shadow-lg shadow-[#B8FF3C]/20">
                     <Leaf size={28} className="text-[#0a1205]" fill="currentColor" />
                 </div>
-                <span className="font-black text-white text-2xl tracking-tight">MacroSnap</span>
+                <span className="font-black text-white text-2xl tracking-tight">NutriSnap</span>
             </div>
 
             {/* Card */}

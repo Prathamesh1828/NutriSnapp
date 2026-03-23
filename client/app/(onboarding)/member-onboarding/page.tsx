@@ -417,7 +417,7 @@ export default function MemberOnboarding() {
                 <div className="w-8 h-8 bg-[#B8FF3C] rounded-lg flex items-center justify-center">
                     <Zap size={14} className="text-[#0A0A0F]" fill="currentColor" />
                 </div>
-                <span className="font-black text-white tracking-tight">MacroSnap</span>
+                <span className="font-black text-white tracking-tight">NutriSnap</span>
             </header>
 
             <main className="flex-1 flex flex-col items-center px-4 sm:px-6 py-8 sm:py-12">

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api`;
 
 export interface Exercise {
     id: string;
@@ -16,6 +16,7 @@ export interface WorkoutPlan {
     userId: string;
     title: string;
     exercises: Exercise[];
+    days?: any[]; // For manual workouts
     weeks?: number;
     notes?: string;
     is_active?: boolean;
@@ -24,6 +25,10 @@ export interface WorkoutPlan {
 
 export const workoutApi = {
     // Exercises
+    fetchExercises: async () => {
+        const res = await axios.get(`${API_BASE_URL}/exercises`);
+        return res.data;
+    },
     fetchBodyParts: async () => {
         const res = await axios.get(`${API_BASE_URL}/exercises/bodyparts`);
         return res.data;
@@ -62,6 +67,10 @@ export const workoutApi = {
     },
     activatePlan: async (planId: string) => {
         const res = await axios.put(`${API_BASE_URL}/workouts/${planId}/activate`);
+        return res.data;
+    },
+    updatePlan: async (planId: string, updates: Partial<WorkoutPlan>) => {
+        const res = await axios.put(`${API_BASE_URL}/workouts/${planId}`, updates);
         return res.data;
     },
     deletePlan: async (planId: string) => {

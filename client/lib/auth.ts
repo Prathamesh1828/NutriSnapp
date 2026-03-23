@@ -18,7 +18,8 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/'}api/account/login`;
+          const baseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/$/, "");
+          const url = `${baseUrl}/api/account/login`;
           console.log('[AUTH DEBUG] Fetching:', url);
           console.log('[AUTH DEBUG] Credentials email:', credentials.email);
 

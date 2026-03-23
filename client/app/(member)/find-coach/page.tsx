@@ -32,10 +32,10 @@ declare global {
 
 // ── Components ─────────────────────────────────────────────────────────────────
 
-function CoachCard({ coach, onConnect, onViewProfile }: { 
-    coach: Coach; 
+function CoachCard({ coach, onConnect, onViewProfile }: {
+    coach: Coach;
     onConnect: (coach: Coach) => void;
-    onViewProfile: (coach: Coach) => void; 
+    onViewProfile: (coach: Coach) => void;
 }) {
     const fullName = `${coach.firstName} ${coach.lastName}`;
     const initials = (coach.firstName[0] || "") + (coach.lastName[0] || "");
@@ -97,7 +97,7 @@ function CoachCard({ coach, onConnect, onViewProfile }: {
                 >
                     {coach.paidChatEnabled ? "Pay & Connect" : "CONNECT"}
                 </button>
-                <button 
+                <button
                     onClick={() => onViewProfile(coach)}
                     className="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/8 text-white font-black text-[11px] py-4 rounded-2xl transition-all active:scale-[0.98] uppercase tracking-widest"
                 >
@@ -119,8 +119,8 @@ function CoachProfileModal({ coach, onClose, onConnect }: { coach: Coach; onClos
                 <div className="p-8 sm:p-12 overflow-y-auto custom-scrollbar">
                     <div className="flex flex-col sm:flex-row items-center sm:items-start gap-8 mb-12">
                         <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-slate-800 to-black rounded-[2.5rem] flex items-center justify-center font-black text-white text-3xl sm:text-4xl border border-white/10 shrink-0 shadow-2xl relative">
-                             <div className="absolute inset-0 rounded-[2.5rem] bg-[#B8FF3C]/5 blur-xl" />
-                             <span className="relative">{initials}</span>
+                            <div className="absolute inset-0 rounded-[2.5rem] bg-[#B8FF3C]/5 blur-xl" />
+                            <span className="relative">{initials}</span>
                         </div>
                         <div className="flex-1 text-center sm:text-left">
                             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 mb-4">
@@ -166,7 +166,7 @@ function CoachProfileModal({ coach, onClose, onConnect }: { coach: Coach; onClos
                                     <span className="text-5xl font-black text-white italic">{coach.paidChatEnabled ? coach.chatFeeINR : "FREE"}</span>
                                     <span className="text-[10px] text-white/40 font-black uppercase ml-1">Per connection</span>
                                 </div>
-                                
+
                                 <div className="space-y-4">
                                     <div className="flex items-start gap-4">
                                         <div className="w-8 h-8 rounded-lg bg-[#B8FF3C]/10 flex items-center justify-center text-[#B8FF3C] shrink-0 mt-0.5"><Check size={16} /></div>
@@ -188,8 +188,8 @@ function CoachProfileModal({ coach, onClose, onConnect }: { coach: Coach; onClos
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-4 pt-10 border-t border-white/5">
-                        <button 
-                            onClick={() => { onConnect(coach); onClose(); }} 
+                        <button
+                            onClick={() => { onConnect(coach); onClose(); }}
                             className="flex-1 bg-[#B8FF3C] text-black font-black text-sm py-5 rounded-[1.5rem] shadow-2xl shadow-[#B8FF3C]/20 hover:bg-[#d4ff6e] transition-all transform hover:-translate-y-1 active:translate-y-0"
                         >
                             {coach.paidChatEnabled ? `PAY ₹${coach.chatFeeINR} & CONNECT` : "CONNECT WITH COACH"}
@@ -208,7 +208,7 @@ function CoachProfileModal({ coach, onClose, onConnect }: { coach: Coach; onClos
 function X({ size, className }: { size: number; className?: string }) {
     return (
         <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}>
-            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+            <path d="M18 6 6 18" /><path d="m6 6 12 12" />
         </svg>
     );
 }
@@ -216,7 +216,7 @@ function X({ size, className }: { size: number; className?: string }) {
 function CreditCard({ size }: { size: number }) {
     return (
         <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>
+            <rect width="20" height="14" x="2" y="5" rx="2" /><line x1="2" x2="22" y1="10" y2="10" />
         </svg>
     );
 }
@@ -264,7 +264,7 @@ export default function FindCoachPage() {
                 body: JSON.stringify({ userId: session.user.id, coachId: coach.user._id })
             });
             const orderJson = await orderRes.json();
-            
+
             if (!orderJson.success) throw new Error(orderJson.error);
 
             // 2. Razorpay Modal
@@ -284,7 +284,7 @@ export default function FindCoachPage() {
                         body: JSON.stringify(response)
                     });
                     const verifyJson = await verifyRes.json();
-                    
+
                     if (verifyJson.success) {
                         // 4. Finalize Connection
                         await finalizeRequest(coach.user._id);
@@ -307,7 +307,7 @@ export default function FindCoachPage() {
     };
 
     const finalizeRequest = async (coachId: string) => {
-         try {
+        try {
             const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
             const res = await fetch(`${apiBase}/api/coach/request`, {
                 method: "POST",
@@ -340,8 +340,8 @@ export default function FindCoachPage() {
     const filtered = coaches.filter((c) => {
         const fullName = `${c.firstName} ${c.lastName}`.toLowerCase();
         const matchSearch = fullName.includes(search.toLowerCase());
-        const matchFilter = activeFilter === "All" || 
-                           c.specialties?.some(s => s.toLowerCase() === activeFilter.toLowerCase());
+        const matchFilter = activeFilter === "All" ||
+            c.specialties?.some(s => s.toLowerCase() === activeFilter.toLowerCase());
         return matchSearch && matchFilter;
     });
 
@@ -366,16 +366,16 @@ export default function FindCoachPage() {
             )}
 
             <div className="animate-fade-in relative">
-                 {/* Background Glow */}
+                {/* Background Glow */}
                 <div className="absolute -top-24 -left-24 w-96 h-96 bg-[#B8FF3C]/5 blur-[120px] rounded-full" />
-                
+
                 <h1 className="text-6xl sm:text-7xl font-black text-white tracking-tighter leading-[0.9] mb-6 italic relative">
                     World-Class Guidance. <br />
                     <span className="text-[#B8FF3C]">Quantified Results.</span>
                 </h1>
                 <p className="text-slate-400 text-base sm:text-lg max-w-2xl leading-relaxed font-medium relative">
-                    Access high-performance transformation experts in our verified elite network. 
-                    MacroSnap intelligence meets real-world professional coaching experience.
+                    Access high-performance transformation experts in our verified elite network.
+                    NutriSnap intelligence meets real-world professional coaching experience.
                 </p>
             </div>
 
@@ -385,9 +385,8 @@ export default function FindCoachPage() {
                         <button
                             key={f}
                             onClick={() => setActiveFilter(f)}
-                            className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all transform active:scale-95 ${
-                                activeFilter === f ? "bg-[#B8FF3C] text-black shadow-lg shadow-[#B8FF3C]/20" : "bg-white/5 text-white/30 hover:text-white hover:bg-white/10"
-                            }`}
+                            className={`px-6 py-2.5 rounded-xl text-[10px] font-black tracking-widest uppercase transition-all transform active:scale-95 ${activeFilter === f ? "bg-[#B8FF3C] text-black shadow-lg shadow-[#B8FF3C]/20" : "bg-white/5 text-white/30 hover:text-white hover:bg-white/10"
+                                }`}
                         >
                             {f}
                         </button>
@@ -408,10 +407,10 @@ export default function FindCoachPage() {
             {filtered.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-8">
                     {filtered.map((coach) => (
-                        <CoachCard 
-                            key={coach._id} 
-                            coach={coach} 
-                            onConnect={handleConnect} 
+                        <CoachCard
+                            key={coach._id}
+                            coach={coach}
+                            onConnect={handleConnect}
                             onViewProfile={(c) => setViewCoach(c)}
                         />
                     ))}
@@ -429,9 +428,9 @@ export default function FindCoachPage() {
             )}
 
             {viewCoach && (
-                <CoachProfileModal 
-                    coach={viewCoach} 
-                    onClose={() => setViewCoach(null)} 
+                <CoachProfileModal
+                    coach={viewCoach}
+                    onClose={() => setViewCoach(null)}
                     onConnect={handleConnect}
                 />
             )}

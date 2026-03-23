@@ -29,12 +29,9 @@ export default function MemberSidebar() {
 
     return (
         <aside className="hidden lg:flex flex-col w-64 min-h-screen bg-[#13131A] border-r border-white/[0.06] fixed left-0 top-0 bottom-0 z-40">
-            {/* Logo */}
             <div className="p-6 border-b border-white/[0.06]">
                 <Link href="/member/dashboard" className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-[#B8FF3C] flex items-center justify-center">
-                        <Zap size={18} className="text-[#0A0A0F]" fill="currentColor" />
-                    </div>
+                    <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
                     <span className="text-lg font-bold text-white">NutriSnap</span>
                 </Link>
             </div>
