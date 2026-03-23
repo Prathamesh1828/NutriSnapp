@@ -18,7 +18,11 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const res = await fetch('http://localhost:5000/api/account/login', {
+          const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/'}api/account/login`;
+          console.log('[AUTH DEBUG] Fetching:', url);
+          console.log('[AUTH DEBUG] Credentials email:', credentials.email);
+          
+          const res = await fetch(url, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -29,16 +33,18 @@ export const authOptions: NextAuthOptions = {
             }),
           });
           
+          console.log('[AUTH DEBUG] Response status:', res.status);
           const user = await res.json();
+          console.log('[AUTH DEBUG] Response body:', JSON.stringify(user));
           
           if (res.ok && user && user.success) {
             return user.data;
           } else {
-             throw new Error(user.error || 'Authentication failed');
+            return null;
           }
         } catch (error) {
-           console.error("Auth error:", error);
-           throw error;
+           console.error("[AUTH DEBUG] Fetch error:", error);
+           return null;
         }
       },
     }),

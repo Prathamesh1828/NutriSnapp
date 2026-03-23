@@ -9,6 +9,8 @@ const onboardingRoutes = require('./routes/onboarding');
 const profileRoutes = require('./routes/profile');
 
 const chatRoutes = require('./routes/chat');
+const exerciseRoutes = require('./routes/exerciseRoutes');
+const workoutRoutes = require('./routes/workoutRoutes');
 const http = require('http');
 const { Server } = require('socket.io');
 
@@ -84,6 +86,8 @@ app.use('/api/user', userRoutes);
 app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/exercises', exerciseRoutes);
+app.use('/api/workouts', workoutRoutes);
 
 const PORT = process.env.PORT || 5000;
 
