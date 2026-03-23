@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get('/member/:userId', async (req, res) => {
     try {
-        const profile = await MemberProfile.findOne({ userId: req.params.userId });
+        const profile = await MemberProfile.findOne({ user: req.params.userId });
         res.status(200).json({ success: true, data: profile });
     } catch (error) {
         console.error('Fetch member profile error:', error);
@@ -18,9 +18,10 @@ router.get('/member/:userId', async (req, res) => {
 router.put('/member/:userId', async (req, res) => {
     try {
         const body = req.body;
+        console.log('Update member profile body:', body);
         const profile = await MemberProfile.findOneAndUpdate(
-            { userId: req.params.userId },
-            { ...body, userId: req.params.userId },
+            { user: req.params.userId },
+            { ...body, user: req.params.userId },
             { new: true, upsert: true }
         );
         res.status(200).json({ success: true, data: profile });
@@ -32,7 +33,7 @@ router.put('/member/:userId', async (req, res) => {
 
 router.get('/coach/:userId', async (req, res) => {
     try {
-        const profile = await CoachProfile.findOne({ userId: req.params.userId });
+        const profile = await CoachProfile.findOne({ user: req.params.userId });
         res.status(200).json({ success: true, data: profile });
     } catch (error) {
         console.error('Fetch coach profile error:', error);
@@ -43,9 +44,10 @@ router.get('/coach/:userId', async (req, res) => {
 router.put('/coach/:userId', async (req, res) => {
     try {
         const body = req.body;
+        console.log('Update coach profile body:', body);
         const profile = await CoachProfile.findOneAndUpdate(
-            { userId: req.params.userId },
-            { ...body, userId: req.params.userId },
+            { user: req.params.userId },
+            { ...body, user: req.params.userId },
             { new: true, upsert: true }
         );
         res.status(200).json({ success: true, data: profile });

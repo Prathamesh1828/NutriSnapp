@@ -1,6 +1,6 @@
 "use client";
 // ── Imports ───────────────────────────────────────────────────────────────────
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { useSocket } from "@/contexts/SocketContext";
@@ -73,21 +73,24 @@ function ChatList({ chats, selected, onSelect, currentUserId }: { chats: any[]; 
 }
 
 // ── Conversation ───────────────────────────────────────────────────────────────
-function Conversation({ chatId, currentUserId, onBack }: { chatId: string; currentUserId: string; onBack: () => void }) {
+function Conversation({ chatId, currentUserId, onBack, autoHello }: { chatId: string; currentUserId: string; onBack: () => void; autoHello?: boolean }) {
     const { socket } = useSocket();
     const [messages, setMessages] = useState<any[]>([]);
     const [input, setInput] = useState("");
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const hasAutoSent = useRef(false);
 
     // Initial load
     useEffect(() => {
         async function fetchHistory() {
             try {
-                const res = await fetch(`http://localhost:5000/api/chat/${chatId}/messages`);
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/chat/${chatId}/messages`);
                 const json = await res.json();
-                if (json.success) setMessages(json.data);
+                if (json.success) {
+                    setMessages(json.data);
+                }
             } catch (err) {
-                console.error("Failed to load generic chat history");
+                console.error("DEBUG: fetchHistory failed", err);
             }
         }
         if (chatId) {
@@ -95,6 +98,24 @@ function Conversation({ chatId, currentUserId, onBack }: { chatId: string; curre
             if (socket) socket.emit("join_chat", chatId);
         }
     }, [chatId, socket]);
+
+    // Separate effect for auto-hello to ensure it waits for socket and chatId
+    useEffect(() => {
+        if (autoHello && socket && chatId && !hasAutoSent.current) {
+            console.log("DEBUG: Auto-hello triggering now", { chatId, currentUserId });
+            hasAutoSent.current = true;
+            
+            const timer = setTimeout(() => {
+                socket.emit("send_message", {
+                    chatId,
+                    senderId: currentUserId,
+                    text: "Hello Coach! I'm excited to start this journey with you."
+                });
+            }, 800);
+            
+            return () => clearTimeout(timer);
+        }
+    }, [autoHello, socket, chatId, currentUserId]);
 
     // Listen for live socket broadcasts
     useEffect(() => {
@@ -192,13 +213,24 @@ function Conversation({ chatId, currentUserId, onBack }: { chatId: string; curre
 }
 
 // ── Main Page ──────────────────────────────────────────────────────────────────
-export default function MessagesPage() {
+function MessagesContent() {
     const { data: session } = useSession();
     const searchParams = useSearchParams();
     const initialChatId = searchParams.get('chatId');
+    const autoHello = searchParams.get('autoHello') === 'true';
+
+    console.log("DEBUG: MessagesContent Initialized", { initialChatId, autoHello });
 
     const [chats, setChats] = useState<any[]>([]);
     const [selectedChat, setSelectedChat] = useState<string | null>(initialChatId);
+
+    // Sync search param with internal state (crucial for notification redirects)
+    useEffect(() => {
+        if (initialChatId) {
+            setSelectedChat(initialChatId);
+            setMobileView("chat");
+        }
+    }, [initialChatId]);
 
     // Mobile view states: "list" | "chat"
     const [mobileView, setMobileView] = useState<"list" | "chat">(initialChatId ? "chat" : "list");
@@ -207,9 +239,16 @@ export default function MessagesPage() {
         async function fetchChats() {
             if (!session?.user?.id) return;
             try {
-                const res = await fetch(`http://localhost:5000/api/chat?userId=${session.user.id}`);
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/chat?userId=${session.user.id}`);
                 const json = await res.json();
-                if (json.success) setChats(json.data);
+                if (json.success) {
+                    const unique = new Map();
+                    json.data.forEach((c: any) => {
+                        const otherId = c.participants.find((p: any) => p._id !== session.user.id)?._id;
+                        if (otherId && !unique.has(otherId)) unique.set(otherId, c);
+                    });
+                    setChats(Array.from(unique.values()));
+                }
             } catch (err) {
                 console.error("Failed fetching chat list", err);
             }
@@ -254,6 +293,7 @@ export default function MessagesPage() {
                             chatId={selectedChat}
                             currentUserId={session.user.id}
                             onBack={() => setMobileView("list")}
+                            autoHello={selectedChat === initialChatId && autoHello}
                         />
                     ) : (
                         <div className="h-full flex items-center justify-center text-slate-500 font-bold">
@@ -264,5 +304,13 @@ export default function MessagesPage() {
             </div>
 
         </div>
+    );
+}
+
+export default function MessagesPage() {
+    return (
+        <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading messages...</div>}>
+            <MessagesContent />
+        </Suspense>
     );
 }

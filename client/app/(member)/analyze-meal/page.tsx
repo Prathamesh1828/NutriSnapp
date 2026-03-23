@@ -2,12 +2,14 @@
 // FILE LOCATION: app/(dashboard)/analyze-meal/page.tsx
 // Content-only — NO Sidebar/Header (parent layout owns those)
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import {
     Upload, Camera, Sparkles, RotateCcw, Save,
     X, Check, AlertCircle, Loader2, Plus, Minus,
     Flame, Beef, Wheat, Droplets, RefreshCw,
 } from "lucide-react";
+import { useGlobalStore } from "@/store/useGlobalStore";
+import { useSession } from "next-auth/react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Nutrition {
@@ -132,7 +134,36 @@ export default function AnalyzeMeal() {
     const [errorMsg, setErrorMsg] = useState("");
     const [isDragging, setIsDragging] = useState(false);
     const [activeTab, setActiveTab] = useState<"analyze" | "log">("analyze");
-    const [log, setLog] = useState<LogEntry[]>([]);
+    const [mounted, setMounted] = useState(false);
+    const { data: session } = useSession();
+    
+    const { foodLog, addFoodLog, deleteFoodLog } = useGlobalStore();
+    
+    const log = useMemo<LogEntry[]>(() => {
+        return foodLog.map((item) => {
+            const f = item as any;
+            return {
+                id: f._id || f.id || Math.random().toString(),
+                imageUrl: f.imageUrl || "",
+                foodName: f.food_name || f.foodName || "Custom Meal",
+                grams: 100, // Fallback
+                servings: 1, 
+                mealType: "Logged",
+                nutrition: {
+                    calories: f.total_calories ?? f.nutrition?.calories ?? 0,
+                    protein: Math.round(f.total_protein ?? f.nutrition?.protein ?? 0),
+                    carbs: Math.round(f.total_carbs ?? f.nutrition?.carbs ?? 0),
+                    fat: Math.round(f.total_fat ?? f.nutrition?.fat ?? 0),
+                    fiber: f.nutrition?.fiber ?? 0,
+                    sugar: f.nutrition?.sugar ?? 0,
+                    sodium: f.nutrition?.sodium ?? 0
+                },
+                date: f.date || (f.createdAt ? new Date(f.createdAt).toISOString() : new Date().toISOString()),
+                loggedAt: new Date(f.createdAt || Date.now()).toLocaleTimeString() 
+            };
+        });
+    }, [foodLog]);
+
     const [logLoading, setLogLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
@@ -151,21 +182,44 @@ export default function AnalyzeMeal() {
 
     // ── Load log from backend on mount ────────────────────────────────────────
     const fetchLog = useCallback(async () => {
+        if (!session?.user?.id) return;
         setLogLoading(true);
         try {
-            const res = await fetch("/api/meal-log");
+            const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+            const res = await fetch(`${apiBase}/api/meal-log/user/${session.user.id}`);
             if (res.ok) {
-                const data = await res.json();
-                setLog(data);
+                const json = await res.json();
+                const data = json.data || [];
+                // Since this page handles fresh fetching, we inject it into the global store
+                data.forEach((l: any) => {
+                   const id = l._id || l.id;
+                   if (!useGlobalStore.getState().foodLog.find((item) => {
+                       const f = item as any;
+                       return (f._id || f.id) === id;
+                   })) {
+                       addFoodLog({
+                           ...l,
+                           _id: id,
+                           food_name: l.food_name || l.foodName,
+                           total_calories: l.total_calories ?? l.nutrition?.calories ?? 0,
+                           total_protein: l.total_protein ?? l.nutrition?.protein ?? 0,
+                           total_carbs: l.total_carbs ?? l.nutrition?.carbs ?? 0,
+                           total_fat: l.total_fat ?? l.nutrition?.fat ?? 0,
+                       });
+                   }
+                });
             }
         } catch (err) {
             console.error("Failed to load log", err);
         } finally {
             setLogLoading(false);
         }
-    }, []);
+    }, [addFoodLog, session]);
 
-    useEffect(() => { fetchLog(); }, [fetchLog]);
+    useEffect(() => {
+        setMounted(true);
+        fetchLog();
+    }, [fetchLog]);
 
     // ── File handling ──────────────────────────────────────────────────────────
     const handleFile = useCallback((file: File) => {
@@ -216,32 +270,62 @@ export default function AnalyzeMeal() {
 
     // ── Save to backend log ────────────────────────────────────────────────────
     const saveToLog = async () => {
-        if (!result || !liveNutrition || saving) return;
+        if (!result || !liveNutrition || saving || !session?.user?.id) return;
         setSaving(true);
 
-        const entry: LogEntry = {
-            id: Date.now().toString(),
-            imageUrl,  // Note: blob URLs don't persist across sessions
-            foodName: result.foodName,
-            grams: adjGrams,
-            servings: adjServings,
-            mealType: adjMealType,
-            nutrition: liveNutrition,
-            loggedAt: nowTime(),
-            date: today(),
-        };
+        const formData = new FormData();
+        formData.append("userId", session.user.id);
+        formData.append("food_name", result.foodName);
+        formData.append("date", today());
+        formData.append("mealType", adjMealType.toLowerCase());
+        formData.append("grams", adjGrams.toString());
+        formData.append("servings", adjServings.toString());
+        
+        // Detailed nutrition as JSON string for easy backend parsing
+        formData.append("nutrition", JSON.stringify(liveNutrition));
+        
+        // Also keep top-level for backwards compatibility if needed
+        formData.append("total_calories", liveNutrition.calories.toString());
+        formData.append("total_protein", liveNutrition.protein.toString());
+        formData.append("total_carbs", liveNutrition.carbs.toString());
+        formData.append("total_fat", liveNutrition.fat.toString());
+
+        if (imageFile) {
+            formData.append("image", imageFile);
+        }
 
         try {
-            const res = await fetch("/api/meal-log", {
+            const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+            const res = await fetch(`${apiBase}/api/meal-log`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(entry),
+                body: formData,
             });
 
             if (!res.ok) throw new Error("Save failed");
 
-            // Update local state immediately so UI reflects without re-fetch
-            setLog(prev => [entry, ...prev]);
+            const json = await res.json();
+            const savedLog = json.data;
+
+            // Push formatted entry to Zustand
+            addFoodLog({
+                ...savedLog,
+                _id: savedLog._id,
+                food_name: savedLog.food_name,
+                total_calories: savedLog.total_calories,
+                total_protein: savedLog.total_protein,
+                total_carbs: savedLog.total_carbs,
+                total_fat: savedLog.total_fat,
+            } as any);
+
+            // Log activity for coach
+            const { logActivity } = await import('@/lib/activity');
+            logActivity(
+                session.user.id,
+                'meal_log',
+                `logged a meal: ${savedLog.food_name}`,
+                { note: `"${savedLog.food_name} — ${savedLog.total_calories} kcal"` }
+            );
+
             setSaved(true);
             setTimeout(() => setActiveTab("log"), 800);
         } catch (err) {
@@ -253,24 +337,25 @@ export default function AnalyzeMeal() {
     };
 
     // ── Delete entry ───────────────────────────────────────────────────────────
-    const deleteEntry = async (id: string) => {
-        setLog(prev => prev.filter(e => e.id !== id)); // optimistic UI
+    const deleteEntryFromLog = async (id: string) => {
         try {
-            await fetch(`/api/meal-log?id=${id}`, { method: "DELETE" });
+            const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+            await fetch(`${apiBase}/api/meal-log/${id}`, { method: "DELETE" });
+            deleteFoodLog(id);
         } catch (err) {
             console.error("Failed to delete", err);
-            fetchLog(); // re-fetch to restore correct state if failed
         }
     };
 
     // ── Clear all ──────────────────────────────────────────────────────────────
     const clearAll = async () => {
-        setLog([]);
+        // Warning: This would usually loop over ids or need a backend mass-delete
+        // Using local clearing for this demonstration
         try {
             await fetch("/api/meal-log", { method: "DELETE" });
+            fetchLog();
         } catch (err) {
             console.error("Failed to clear", err);
-            fetchLog();
         }
     };
 
@@ -285,6 +370,8 @@ export default function AnalyzeMeal() {
     };
 
     // ── Render ─────────────────────────────────────────────────────────────────
+    if (!mounted) return <div className="min-h-screen bg-[#0A0A0F]" />;
+
     return (
         <div className="p-6 sm:p-8 max-w-2xl mx-auto">
 
@@ -587,21 +674,21 @@ export default function AnalyzeMeal() {
                                     <div className="text-[10px] text-slate-500 uppercase tracking-wider">Meals</div>
                                 </div>
                                 <div>
-                                    <div className="text-lg font-black text-white">{log.reduce((s, e) => s + e.nutrition.calories, 0)}</div>
+                                    <div className="text-lg font-black text-white">{log.reduce((s: number, e: LogEntry) => s + e.nutrition.calories, 0)}</div>
                                     <div className="text-[10px] text-slate-500 uppercase tracking-wider">Cal</div>
                                 </div>
                                 <div>
-                                    <div className="text-lg font-black text-emerald-400">{log.reduce((s, e) => s + e.nutrition.protein, 0)}g</div>
+                                    <div className="text-lg font-black text-emerald-400">{log.reduce((s: number, e: LogEntry) => s + e.nutrition.protein, 0)}g</div>
                                     <div className="text-[10px] text-slate-500 uppercase tracking-wider">Protein</div>
                                 </div>
                                 <div>
-                                    <div className="text-lg font-black text-orange-400">{log.reduce((s, e) => s + e.nutrition.carbs, 0)}g</div>
+                                    <div className="text-lg font-black text-orange-400">{log.reduce((s: number, e: LogEntry) => s + e.nutrition.carbs, 0)}g</div>
                                     <div className="text-[10px] text-slate-500 uppercase tracking-wider">Carbs</div>
                                 </div>
                             </div>
 
                             {/* Entries */}
-                            {log.map(entry => (
+                            {log.map((entry: LogEntry) => (
                                 <div key={entry.id} className="bg-[#13131A] border border-white/8 rounded-2xl p-4 flex gap-4">
                                     {/* Image or placeholder */}
                                     {entry.imageUrl ? (
@@ -617,7 +704,7 @@ export default function AnalyzeMeal() {
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-start justify-between mb-1">
                                             <h3 className="text-sm font-black text-white truncate pr-2">{entry.foodName}</h3>
-                                            <button onClick={() => deleteEntry(entry.id)}
+                                            <button onClick={() => deleteEntryFromLog(entry.id)}
                                                 className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center hover:bg-red-500/20 transition-all flex-shrink-0">
                                                 <X size={11} className="text-slate-500" />
                                             </button>

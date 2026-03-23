@@ -21,7 +21,7 @@ export const authOptions: NextAuthOptions = {
           const url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/'}api/account/login`;
           console.log('[AUTH DEBUG] Fetching:', url);
           console.log('[AUTH DEBUG] Credentials email:', credentials.email);
-          
+
           const res = await fetch(url, {
             method: 'POST',
             headers: {
@@ -32,19 +32,19 @@ export const authOptions: NextAuthOptions = {
               password: credentials.password
             }),
           });
-          
+
           console.log('[AUTH DEBUG] Response status:', res.status);
           const user = await res.json();
           console.log('[AUTH DEBUG] Response body:', JSON.stringify(user));
-          
+
           if (res.ok && user && user.success) {
             return user.data;
           } else {
             return null;
           }
         } catch (error) {
-           console.error("[AUTH DEBUG] Fetch error:", error);
-           return null;
+          console.error("[AUTH DEBUG] Fetch error:", error);
+          return null;
         }
       },
     }),
@@ -52,11 +52,12 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       if (trigger === "update") {
-         if (session?.role) token.role = session.role;
-         if (session?.onboardingComplete !== undefined) token.onboardingComplete = session.onboardingComplete;
+        if (session?.role) token.role = session.role;
+        if (session?.onboardingComplete !== undefined) token.onboardingComplete = session.onboardingComplete;
       }
       if (user) {
         token.id = user.id;
+        token.name = (user as any).name;
         token.role = (user as unknown as { role: string }).role;
         token.onboardingComplete = (user as unknown as { onboardingComplete: boolean }).onboardingComplete;
       }
@@ -65,6 +66,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id as string;
+        session.user.name = token.name as string;
         session.user.role = token.role as string;
         session.user.onboardingComplete = token.onboardingComplete as boolean;
       }

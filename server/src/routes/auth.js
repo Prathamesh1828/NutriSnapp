@@ -1,6 +1,8 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const MemberProfile = require('../models/MemberProfile');
+const CoachProfile = require('../models/CoachProfile');
 
 const router = express.Router();
 
@@ -17,7 +19,7 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Password must be at least 8 characters' });
         }
 
-        const existing = await User.findOne({ email: email.toLowerCase() });
+        const existing = await User.findOne({ email: email.trim().toLowerCase() });
         if (existing) {
             return res.status(409).json({ success: false, error: 'Email already registered' });
         }
@@ -25,7 +27,7 @@ router.post('/register', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 12);
 
         const user = await User.create({
-            email: email.toLowerCase(),
+            email: email.trim().toLowerCase(),
             password: hashedPassword,
             role: role || null,
             isVerified: false,
@@ -51,7 +53,7 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Email and password are required' });
         }
 
-        const user = await User.findOne({ email: email.toLowerCase() });
+        const user = await User.findOne({ email: email.trim().toLowerCase() });
         if (!user || !user.password) {
             return res.status(401).json({ success: false, error: 'Invalid credentials' });
         }
@@ -61,11 +63,22 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ success: false, error: 'Invalid credentials' });
         }
 
+        // Fetch name from profile if role is set
+        let name = null;
+        if (user.role === 'member') {
+            const profile = await MemberProfile.findOne({ user: user._id });
+            if (profile) name = `${profile.firstName} ${profile.lastName}`;
+        } else if (user.role === 'coach') {
+            const profile = await CoachProfile.findOne({ user: user._id });
+            if (profile) name = profile.name || `${profile.firstName} ${profile.lastName}`;
+        }
+
         res.status(200).json({
             success: true,
             data: {
                 id: user._id,
                 email: user.email,
+                name: name || (user.firstName ? `${user.firstName} ${user.lastName}` : null),
                 role: user.role,
                 onboardingComplete: user.onboardingComplete
             }

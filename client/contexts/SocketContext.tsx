@@ -21,7 +21,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         // Only connect if the user is authenticated
         if (status === "authenticated" && session?.user?.id) {
-            const socketInstance = io("http://localhost:5000", {
+            const socketInstance = io(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}`, {
                 withCredentials: true,
                 autoConnect: true,
             });
@@ -29,6 +29,8 @@ export function SocketProvider({ children }: { children: ReactNode }) {
             socketInstance.on("connect", () => {
                 console.log("Socket connected:", socketInstance.id);
                 setIsConnected(true);
+                // Join user's individual room for targeted notifications
+                socketInstance.emit("join_user", session.user.id);
             });
 
             socketInstance.on("disconnect", () => {

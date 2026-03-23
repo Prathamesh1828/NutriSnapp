@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -22,21 +23,48 @@ const navItems = [
 
 export default function CoachSidebar() {
     const pathname = usePathname();
-    const { isCollapsed, setIsCollapsed } = useSidebar();
+    const { isCollapsed, setIsCollapsed, isOpen, setIsOpen } = useSidebar();
     const { coachProfile } = useUserContext();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Safely extract name and initials
-    const coachName = coachProfile?.fullName || 'Coach';
+    const coachName = coachProfile?.name || 'Coach';
     const initials = coachName.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
 
     return (
-        <motion.aside
-            animate={{ width: isCollapsed ? 80 : 256 }}
-            transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="hidden lg:flex flex-col min-h-screen bg-[#13131A] border-r border-white/[0.06] fixed left-0 top-0 bottom-0 z-40"
-        >
+        <>
+            {/* Mobile Backdrop */}
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setIsOpen(false)}
+                        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 lg:hidden"
+                    />
+                )}
+            </AnimatePresence>
+
+            <motion.aside
+                initial={false}
+                animate={{ 
+                    width: isCollapsed ? 80 : 256,
+                    x: isOpen ? 0 : (mounted && typeof window !== 'undefined' && window.innerWidth < 1024 ? -256 : 0)
+                }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className={cn(
+                    "flex flex-col min-h-screen bg-[#13131A] border-r border-white/[0.06] fixed left-0 top-0 bottom-0 z-50",
+                    !isOpen && "hidden lg:flex"
+                )}
+            >
             {/* Collapse Toggle */}
             <button
+                suppressHydrationWarning
                 onClick={() => setIsCollapsed(!isCollapsed)}
                 className="absolute -right-3 top-8 w-6 h-6 bg-[#13131A] border border-white/[0.06] rounded-full flex items-center justify-center text-white/50 hover:text-white hover:bg-white/5 z-50 transition-colors"
             >
@@ -70,7 +98,7 @@ export default function CoachSidebar() {
                 {navItems.map((item) => {
                     const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
                     return (
-                        <Link key={item.href} href={item.href} className={isCollapsed ? "w-full flex justify-center" : "w-full"}>
+                        <Link key={item.href} href={item.href} onClick={() => setIsOpen(false)} className={isCollapsed ? "w-full flex justify-center" : "w-full"}>
                             <motion.div
                                 whileHover={{ x: isCollapsed ? 0 : 4 }}
                                 title={isCollapsed ? item.label : undefined}
@@ -133,7 +161,7 @@ export default function CoachSidebar() {
                     </AnimatePresence>
                 </div>
 
-                <Link href="/coach/settings" className={isCollapsed ? "w-full flex justify-center" : "w-full"}>
+                <Link href="/coach/settings" onClick={() => setIsOpen(false)} className={isCollapsed ? "w-full flex justify-center" : "w-full"}>
                     <div
                         title={isCollapsed ? "Settings" : undefined}
                         className={cn(
@@ -160,6 +188,7 @@ export default function CoachSidebar() {
                 </Link>
 
                 <button
+                    suppressHydrationWarning
                     onClick={() => signOut({ callbackUrl: '/login' })}
                     title={isCollapsed ? "Sign Out" : undefined}
                     className={cn(
@@ -184,5 +213,6 @@ export default function CoachSidebar() {
                 </button>
             </div>
         </motion.aside>
+        </>
     );
 }
