@@ -89,4 +89,55 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// Google Login (Used by NextAuth)
+router.post('/google-login', async (req, res) => {
+    try {
+        const { email, name, image } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ success: false, error: 'Email is required' });
+        }
+
+        let user = await User.findOne({ email: email.trim().toLowerCase() });
+        
+        if (!user) {
+            // New user from Google
+            user = await User.create({
+                email: email.trim().toLowerCase(),
+                firstName: name ? name.split(' ')[0] : 'User',
+                lastName: name ? name.split(' ').slice(1).join(' ') : '',
+                // No password for Google users
+                role: null, // User will select role in next step
+                isVerified: true, // Google accounts are verified
+                onboardingComplete: false,
+                image: image || null
+            });
+        }
+
+        // Fetch name from profile if role is set
+        let profileName = null;
+        if (user.role === 'member') {
+            const profile = await MemberProfile.findOne({ user: user._id });
+            if (profile) profileName = `${profile.firstName} ${profile.lastName}`;
+        } else if (user.role === 'coach') {
+            const profile = await CoachProfile.findOne({ user: user._id });
+            if (profile) profileName = profile.name || `${profile.firstName} ${profile.lastName}`;
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                id: user._id,
+                email: user.email,
+                name: profileName || (user.firstName ? `${user.firstName} ${user.lastName}` : name),
+                role: user.role,
+                onboardingComplete: user.onboardingComplete
+            }
+        });
+    } catch (error) {
+        console.error('Google login error:', error);
+        res.status(500).json({ success: false, error: 'Server error' });
+    }
+});
+
 module.exports = router;
