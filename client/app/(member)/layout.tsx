@@ -154,34 +154,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const [collapsed, setCollapsed] = useState(false);
 
     useEffect(() => {
-        if (session?.user) {
-            const sessionName = (session.user as any).name;
-            const [fName, ...lNames] = (sessionName || "").split(" ");
-            const lName = lNames.join(" ");
-
-            if (!user || (!user.firstName && fName)) {
-                setUser({
-                    _id: (session.user as any).id || "1",
-                    userId: (session.user as any).id || "1",
-                    firstName: fName || "User",
-                    lastName: lName || "",
-                    age: user?.age || 25,
-                    gender: user?.gender || 'other',
-                    heightCm: user?.heightCm || 175,
-                    weightKg: user?.weightKg || 70,
-                    goal: user?.goal || 'maintain',
-                    experience: user?.experience || 'beginner',
-                    activityLevel: user?.activityLevel || 'moderate',
-                    targetCalories: user?.targetCalories || 2000,
-                    targetProtein: user?.targetProtein || 150,
-                    targetCarbs: user?.targetCarbs || 200,
-                    targetFat: user?.targetFat || 60,
-                    aiAdaptive: user?.aiAdaptive || true,
-                    notifications: user?.notifications || true
-                });
+        const fetchProfile = async () => {
+            if (!session?.user?.id) return;
+            try {
+                const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+                const res = await fetch(`${apiBase}/api/profile/member/${session.user.id}`);
+                const data = await res.json();
+                if (data.success && data.data) {
+                    setUser(data.data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch profile:", error);
             }
+        };
+
+        if (session?.user?.id) {
+            fetchProfile();
         }
-    }, [session, user, setUser]);
+    }, [session?.user?.id, setUser]);
 
     useRemindersRunner();
 

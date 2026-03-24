@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
             if (filters.includes("Vegan")) tags.push("vegan");
             if (filters.includes("Indian")) tags.push("indian");
 
+            // Since Random doesn't include nutrition, we get the ID then fetch detail
             const randomRes = await fetch(
                 `https://api.spoonacular.com/recipes/random?apiKey=${apiKey}&number=1&tags=${tags.join(",")}`,
                 { cache: "no-store" }
@@ -32,24 +33,37 @@ export async function GET(req: NextRequest) {
             const randomData = await randomRes.json();
             const r = randomData.recipes[0];
             
-            // Shape just like the detail response for the modal
+            // Re-fetch detail to get full nutrition
+            const detailRes = await fetch(
+                `https://api.spoonacular.com/recipes/${r.id}/information?apiKey=${apiKey}&includeNutrition=true`,
+                { cache: "no-store" }
+            );
+            if (!detailRes.ok) throw new Error(`Failed to fetch detail for random recipe`);
+            const data = await detailRes.json();
+
+            const nutrition = data.nutrition?.nutrients || [];
+            const getNutrient = (name: string) => {
+                const n = nutrition.find((n: any) => n.name === name);
+                return n ? { amount: Math.round(n.amount), unit: n.unit } : { amount: 0, unit: "g" };
+            };
+
             return NextResponse.json({
-                id: r.id,
-                title: r.title,
-                image: r.image || "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&q=80",
-                summary: r.summary,
-                instructions: r.instructions,
-                analyzedInstructions: r.analyzedInstructions,
-                extendedIngredients: r.extendedIngredients || [],
-                readyInMinutes: r.readyInMinutes || 0,
-                servings: r.servings || 1,
+                id: data.id,
+                title: data.title,
+                image: data.image || "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&q=80",
+                summary: data.summary,
+                instructions: data.instructions,
+                analyzedInstructions: data.analyzedInstructions,
+                extendedIngredients: data.extendedIngredients || [],
+                readyInMinutes: data.readyInMinutes || 0,
+                servings: data.servings || 1,
                 nutrition: {
-                    calories: { amount: 0, unit: "kcal" }, // Random endpoint doesn't return full nutrition by default
-                    protein: { amount: 0, unit: "g" },
-                    fat: { amount: 0, unit: "g" },
-                    carbs: { amount: 0, unit: "g" },
+                    calories: getNutrient("Calories"),
+                    protein: getNutrient("Protein"),
+                    fat: getNutrient("Fat"),
+                    carbs: getNutrient("Carbohydrates"),
                 },
-                diets: r.diets || [],
+                diets: data.diets || [],
             });
         } catch (error: any) {
             console.error("Random API error:", error);
@@ -192,17 +206,18 @@ export async function GET(req: NextRequest) {
         // ── Shape the data ──
         const shapedRecipes = data.results.map((r: any) => {
             const nutrients = r.nutrition?.nutrients || [];
-            const getNutrient = (name: string) => Math.round(nutrients.find((n: any) => n.name === name)?.amount || 0);
+            const getNutrient = (name: string) => nutrients.find((n: any) => n.name === name)?.amount;
 
             return {
                 id: r.id,
                 title: r.title,
                 image: r.image,
                 readyInMinutes: r.readyInMinutes,
-                calories: getNutrient("Calories"),
-                protein: getNutrient("Protein"),
-                carbs: getNutrient("Carbohydrates"),
-                fat: getNutrient("Fat"),
+                // Fallback to top-level if nutrition object is missing or nutrient not found
+                calories: Math.round(getNutrient("Calories") ?? r.calories ?? 0),
+                protein: Math.round(getNutrient("Protein") ?? r.protein ?? 0),
+                carbs: Math.round(getNutrient("Carbohydrates") ?? r.carbs ?? 0),
+                fat: Math.round(getNutrient("Fat") ?? r.fat ?? 0),
                 diets: r.diets || [],
                 tags: [...(r.diets || []), ...(r.dishTypes || [])],
             };

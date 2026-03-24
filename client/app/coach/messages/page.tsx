@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { useSocket } from "@/contexts/SocketContext";
-import { Search, Edit3, MoreVertical, Send, Plus, ChevronLeft, User, Hash, Paperclip, Smile } from "lucide-react";
+import { Search, Edit3, MoreVertical, Send, Plus, ChevronLeft, User, Hash, Paperclip, Smile, Image as ImageIcon, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // ── Avatar Helper ─────────────────────────────────────────────────────────────
@@ -73,7 +73,7 @@ function ChatList({
                         </div>
                     </div>
                 ) : chats.map((chat) => {
-                    const otherUser = chat.participants.find((p: any) => p._id !== currentUserId);
+                    const otherUser = chat.participants.find((p: any) => p._id.toString() !== currentUserId.toString());
                     const name = otherUser
                         ? `${otherUser.firstName || ''} ${otherUser.lastName || ''}`.trim() || otherUser.email?.split('@')[0] || "Member"
                         : "Member";
@@ -101,11 +101,13 @@ function ChatList({
                                     <span className={`font-black text-xs truncate ${isSelected ? "text-[#B8FF3C]" : "text-white"}`}>
                                         {name}
                                     </span>
-                                    <span className="text-[9px] text-slate-600 font-bold shrink-0 uppercase tracking-tighter">12:45 PM</span>
+                                    <span className="text-[9px] text-slate-600 font-bold shrink-0 uppercase tracking-tighter">
+                                        {chat.updatedAt ? new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'NOW'}
+                                    </span>
                                 </div>
                                 <div className="flex items-center justify-between gap-2">
                                     <p className={`text-[11px] truncate leading-tight ${isSelected ? "text-white/70" : "text-slate-500"}`}>
-                                        {chat.lastMessage || 'Start a conversation with your member...'}
+                                        {chat.lastMessage || 'Start a conversation...'}
                                     </p>
                                 </div>
                             </div>
@@ -165,14 +167,34 @@ function Conversation({
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
     const handleSend = () => {
-        if (!input.trim() || !socket) return;
-        socket.emit("send_message", {
+        console.log("DEBUG: handleSend called", { hasInput: !!input.trim(), hasImage: !!imagePreview });
+        if ((!input.trim() && !imagePreview) || !socket) return;
+
+        const payload = {
             chatId,
             senderId: currentUserId,
-            text: input.trim(),
-        });
+            text: input.trim() || "",
+            image: imagePreview || null
+        };
+
+        socket.emit("send_message", payload);
         setInput("");
+        setImagePreview(null);
     };
 
     return (
@@ -231,9 +253,16 @@ function Conversation({
                                         ? "bg-[#1E2B12] text-white rounded-tr-none border border-[#B8FF3C]/10"
                                         : "bg-[#161A10] text-slate-200 rounded-tl-none border border-white/5"
                                         }`}>
+                                        {msg.image && (
+                                            <div className="mb-2 overflow-hidden rounded-xl border border-white/5 bg-black/20">
+                                                <img src={msg.image} alt="Shared" className="max-w-full h-auto object-cover max-h-64" />
+                                            </div>
+                                        )}
                                         {msg.text}
                                     </div>
-                                    <span className="text-[9px] text-slate-600 font-bold uppercase tracking-widest px-1">12:46 PM</span>
+                                    <span className="text-[9px] text-slate-600 font-bold uppercase tracking-widest px-1">
+                                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
                                 </div>
                             </motion.div>
                         </AnimatePresence>
@@ -243,11 +272,46 @@ function Conversation({
             </div>
 
             {/* Input Composer */}
-            <div className="flex-shrink-0 px-6 py-6 border-t border-white/5 bg-[#0D0D12]">
+            <div className="flex-shrink-0 px-6 py-6 border-t border-white/5 bg-[#0D0D12] pb-10 sm:pb-6">
+                <AnimatePresence>
+                    {imagePreview && (
+                        <div className="mb-3 relative group w-24 h-24">
+                            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded-xl border border-white/10" />
+                            <button
+                                onClick={() => setImagePreview(null)}
+                                className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white shadow-lg z-10"
+                            >
+                                <X size={12} />
+                            </button>
+                        </div>
+                    )}
+                </AnimatePresence>
+
                 <div className="flex items-end gap-3 bg-[#0A0A0F] border border-white/8 rounded-2xl p-2 focus-within:border-[#B8FF3C]/40 transition-all">
-                    <button className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl hover:bg-white/5 text-slate-500 hover:text-white transition-colors">
-                        <Paperclip size={18} />
-                    </button>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileSelect}
+                        accept="image/*"
+                        className="hidden"
+                    />
+
+                    <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/5">
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${imagePreview ? 'bg-[#B8FF3C] text-[#0A0A0F]' : 'text-slate-500 hover:text-white hover:bg-white/5'}`}
+                        >
+                            <ImageIcon size={18} />
+                        </button>
+                        <button
+                            onClick={handleSend}
+                            disabled={!input.trim() && !imagePreview}
+                            className="w-9 h-9 flex items-center justify-center rounded-lg bg-[#B8FF3C] text-[#0A0A0F] hover:bg-[#d4ff6e] transition-all disabled:opacity-20"
+                        >
+                            <Send size={16} />
+                        </button>
+                    </div>
+
                     <div className="flex-1 min-w-0">
                         <textarea
                             rows={1}
@@ -259,21 +323,9 @@ function Conversation({
                                     handleSend();
                                 }
                             }}
-                            placeholder={`Message ${memberName.split(' ')[0]}...`}
+                            placeholder={imagePreview ? "Add a caption..." : `Message ${memberName.split(' ')[0]}...`}
                             className="w-full bg-transparent border-none resize-none px-2 py-2.5 text-sm text-white placeholder-slate-600 focus:ring-0 max-h-32 scrollbar-none"
                         />
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <button className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl hover:bg-white/5 text-slate-500 hover:text-white transition-colors">
-                            <Smile size={18} />
-                        </button>
-                        <button
-                            onClick={handleSend}
-                            disabled={!input.trim()}
-                            className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-[#B8FF3C] text-[#0A0A0F] hover:bg-[#d4ff6e] transition-all disabled:grayscale disabled:opacity-30 shadow-lg shadow-[#B8FF3C]/10"
-                        >
-                            <Send size={16} />
-                        </button>
                     </div>
                 </div>
                 <p className="text-[9px] text-slate-600 font-bold mt-2 text-center uppercase tracking-widest hidden sm:block">
@@ -307,7 +359,8 @@ function CoachMessagesContent() {
                 if (json.success) {
                     const unique = new Map();
                     json.data.forEach((c: any) => {
-                        const otherId = c.participants.find((p: any) => p._id !== session.user.id)?._id;
+                        const otherParticipant = c.participants.find((p: any) => p._id.toString() !== session.user.id.toString());
+                        const otherId = otherParticipant?._id?.toString();
                         if (otherId && !unique.has(otherId)) unique.set(otherId, c);
                     });
                     currentChats = Array.from(unique.values());
@@ -347,7 +400,7 @@ function CoachMessagesContent() {
     const handleSelectChat = (chatId: string) => {
         const chat = chats.find((c) => c._id === chatId);
         if (chat && session?.user?.id) {
-            const otherUser = chat.participants.find((p: any) => p._id !== session.user.id);
+            const otherUser = chat.participants.find((p: any) => p._id.toString() !== session.user.id.toString());
             const name = otherUser
                 ? `${otherUser.firstName || ''} ${otherUser.lastName || ''}`.trim() || otherUser.email?.split('@')[0] || "Member"
                 : "Member";

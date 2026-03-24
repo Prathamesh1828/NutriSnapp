@@ -7,6 +7,7 @@ import {
     ArrowRight, ArrowLeft, Zap, User, Star, Users, Building2,
     ChevronDown, Check, Bell, X, Plus, Sparkles, Camera
 } from "lucide-react";
+import { CustomSelect } from "@/components/ui/Select";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface CoachData {
@@ -82,20 +83,6 @@ function Textarea({ label, ...props }: React.TextareaHTMLAttributes<HTMLTextArea
         </div>
     );
 }
-function SelectField({ label, options, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { label: string; options: { value: string; label: string }[] }) {
-    return (
-        <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</label>
-            <div className="relative">
-                <select {...props} className="w-full bg-[#13131A] border border-white/8 rounded-xl px-4 py-3 text-white text-sm appearance-none focus:outline-none focus:border-[#10b981]/50 transition-all pr-10">
-                    <option value="" disabled>Select…</option>
-                    {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-            </div>
-        </div>
-    );
-}
 function Toggle({ checked, onChange, label, sub }: { checked: boolean; onChange: () => void; label: string; sub?: string }) {
     return (
         <div className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
@@ -148,8 +135,12 @@ function StepProfile({ data, onChange }: { data: CoachData; onChange: (d: Partia
                 <Textarea label="Bio" placeholder="Tell clients what makes you the right coach for them…" value={data.bio} onChange={e => onChange({ bio: e.target.value })} />
                 <div className="grid grid-cols-2 gap-3">
                     <Input label="Certifications" placeholder="NASM, ACE…" value={data.certifications} onChange={e => onChange({ certifications: e.target.value })} />
-                    <SelectField label="Years Experience" value={data.yearsExp} onChange={e => onChange({ yearsExp: e.target.value })}
-                        options={["< 1", "1–2", "3–5", "6–10", "10+"].map(v => ({ value: v, label: v + " years" }))} />
+                 <CustomSelect 
+                    label="Years Experience" 
+                    value={data.yearsExp} 
+                    onChange={val => onChange({ yearsExp: val })}
+                    options={["< 1", "1–2", "3–5", "6–10", "10+"].map(v => ({ value: v, label: v + " years" }))} 
+                />
                 </div>
             </div>
 

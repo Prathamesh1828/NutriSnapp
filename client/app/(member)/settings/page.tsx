@@ -9,6 +9,7 @@ import {
     ChevronDown, Eye, EyeOff, Bug, Rocket, Monitor,
     Droplets, Utensils, Dumbbell, Sparkles
 } from "lucide-react";
+import { CustomSelect } from "@/components/ui/Select";
 
 // ─── Internal UI Components (Premium Look) ───────────────────────────────────
 const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) => (
@@ -25,8 +26,8 @@ const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (v: boolean
     </button>
 );
 
-const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-    <div className={`rounded-2xl p-5 bg-[#13131A] border border-white/5 ${className}`}>
+const Card = ({ children, className = "", onClick }: { children: React.ReactNode; className?: string; onClick?: () => void }) => (
+    <div onClick={onClick} className={`rounded-2xl p-5 bg-[#13131A] border border-white/5 ${className}`}>
         {children}
     </div>
 );
@@ -56,6 +57,16 @@ const ModeBtn = ({ label, active, onClick }: { label: string; active: boolean; o
 export default function SettingsPage() {
     const { data: session } = useSession();
     const { user, setUser } = useGlobalStore();
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    
+    // Store original settings to allow Discard
+    const [initialSettings, setInitialSettings] = useState<any>(null);
+    
+    // Feedback Support state
+    const [fbType, setFbType] = useState<'bug' | 'feature' | null>(null);
+    const [fbSubmitting, setFbSubmitting] = useState(false);
+    const [fbSent, setFbSent] = useState(false);
     
     // UI Local State
     const [waterOn, setWaterOn] = useState(true);
@@ -69,21 +80,118 @@ export default function SettingsPage() {
 
     // Sync from store
     const [targets, setTargets] = useState({
-        calories: user?.targetCalories || 2000,
-        protein: user?.targetProtein || 150,
-        water: 3000, // Water is not in profile yet
+        calories: 2000,
+        protein: 150,
+        water: 3000,
     });
 
-    const handleSave = () => {
-        if (user) {
-            setUser({
-                ...user,
-                targetCalories: targets.calories,
-                targetProtein: targets.protein,
+    useEffect(() => {
+        const fetchSettings = async () => {
+            if (!session?.user?.id) return;
+            try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/user/settings/${session.user.id}`);
+                const data = await res.json();
+                if (data.success && data.data) {
+                    const s = data.data;
+                    setWaterOn(s.notifications.water);
+                    setMealOn(s.notifications.meal);
+                    setWorkoutOn(s.notifications.workout);
+                    setAnalytics(s.analytics);
+                    setAiProvider(s.ai.provider);
+                    setApiKey(s.ai.apiKey);
+                    const settingsObj = {
+                        calories: s.targets.calories || 2000,
+                        protein: s.targets.protein || 150,
+                        water: s.targets.water || 3000,
+                    };
+                    setTargets(settingsObj);
+                    
+                    setInitialSettings({
+                        waterOn: s.notifications.water,
+                        mealOn: s.notifications.meal,
+                        workoutOn: s.notifications.workout,
+                        analytics: s.analytics,
+                        aiProvider: s.ai.provider,
+                        apiKey: s.ai.apiKey,
+                        targets: settingsObj
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to fetch settings:", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchSettings();
+    }, [session?.user?.id]);
+
+    const handleSave = async () => {
+        if (!session?.user?.id) return;
+        setIsSaving(true);
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/user/settings/${session.user.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    notifications: { water: waterOn, meal: mealOn, workout: workoutOn },
+                    ai: { provider: aiProvider, apiKey },
+                    analytics,
+                    targets,
+                }),
             });
+            const data = await res.json();
+            if (data.success) {
+                if (user) {
+                    setUser({
+                        ...user,
+                        targetCalories: targets.calories,
+                        targetProtein: targets.protein,
+                        targetWater: targets.water,
+                    });
+                }
+                setSaved(true);
+                setTimeout(() => setSaved(false), 2000);
+            }
+        } catch (err) {
+            console.error("Failed to save settings:", err);
+            alert("Error saving settings");
+        } finally {
+            setIsSaving(false);
         }
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
+    };
+
+    const handleDiscard = () => {
+        if (!initialSettings) return;
+        setWaterOn(initialSettings.waterOn);
+        setMealOn(initialSettings.mealOn);
+        setWorkoutOn(initialSettings.workoutOn);
+        setAnalytics(initialSettings.analytics);
+        setAiProvider(initialSettings.aiProvider);
+        setApiKey(initialSettings.apiKey);
+        setTargets(initialSettings.targets);
+    };
+
+    const handleFeedback = async (title: string, description: string) => {
+        if (!session?.user?.id || !fbType) return;
+        setFbSubmitting(true);
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/user/feedback`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: session.user.id, type: fbType, title, description }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setFbSent(true);
+                setTimeout(() => { setFbSent(false); setFbType(null); }, 2000);
+            }
+        } catch (err) {
+            console.error("Feedback error:", err);
+            alert("Error submitting feedback");
+        } finally {
+            setFbSubmitting(false);
+        }
     };
 
     const inputCls = "w-full bg-[#0A0A0F] border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-[#B8FF3C]/50 transition-all";
@@ -91,9 +199,16 @@ export default function SettingsPage() {
     return (
         <div className="max-w-4xl mx-auto space-y-12 pb-24">
             
-            <div className="mb-10">
-                <h1 className="text-3xl font-black text-white mb-2">Settings</h1>
-                <p className="text-slate-500">Customize your NutriSnap experience and AI preferences</p>
+            <div className="mb-10 flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-black text-white mb-2">Settings</h1>
+                    <p className="text-slate-500">Customize your NutriSnap experience and AI preferences</p>
+                </div>
+                {isLoading && (
+                    <div className="flex items-center gap-2 text-[#B8FF3C] text-xs font-bold bg-[#B8FF3C]/10 px-3 py-1.5 rounded-full">
+                        <Monitor size={14} className="animate-spin" /> Synchronizing...
+                    </div>
+                )}
             </div>
 
             {/* ── Notifications ── */}
@@ -122,15 +237,17 @@ export default function SettingsPage() {
                 <SectionHeader icon={Brain} title="AI Configuration" />
                 <Card>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
-                        <div>
-                            <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">AI Provider</label>
-                            <div className="relative">
-                                <select value={aiProvider} onChange={(e) => setAiProvider(e.target.value)} className={inputCls}>
-                                    <option value="groq">Groq — Llama 3 (Ultra Fast)</option>
-                                    <option value="openai">OpenAI — GPT-4o</option>
-                                    <option value="gemini">Google — Gemini 1.5 Pro</option>
-                                </select>
-                            </div>
+                         <div>
+                            <CustomSelect 
+                                label="AI Provider" 
+                                value={aiProvider} 
+                                onChange={setAiProvider} 
+                                options={[
+                                    { value: "groq", label: "Groq — Llama 3 (Ultra Fast)" },
+                                    { value: "openai", label: "OpenAI — GPT-4o" },
+                                    { value: "gemini", label: "Google — Gemini 1.5 Pro" },
+                                ]} 
+                            />
                         </div>
                         <div>
                             <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">API Key</label>
@@ -191,18 +308,65 @@ export default function SettingsPage() {
             <section>
                 <SectionHeader icon={HelpCircle} title="Support & Feedback" />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Card className="hover:border-white/20 transition-all cursor-pointer">
-                        <Bug size={24} className="text-orange-400 mb-3" />
+                    <Card onClick={() => setFbType('bug')} className="hover:border-white/20 transition-all cursor-pointer group">
+                        <Bug size={24} className="text-orange-400 mb-3 group-hover:scale-110 transition-transform" />
                         <p className="text-sm font-bold text-white mb-1">Report a Bug</p>
                         <p className="text-xs text-slate-500">Found an issue? Our team is on it.</p>
                     </Card>
-                    <Card className="hover:border-white/20 transition-all cursor-pointer">
-                        <Rocket size={24} className="text-[#B8FF3C] mb-3" />
+                    <Card onClick={() => setFbType('feature')} className="hover:border-white/20 transition-all cursor-pointer group">
+                        <Rocket size={24} className="text-[#B8FF3C] mb-3 group-hover:scale-110 transition-transform" />
                         <p className="text-sm font-bold text-white mb-1">Feature Request</p>
                         <p className="text-xs text-slate-500">Tell us what you want to see next.</p>
                     </Card>
                 </div>
             </section>
+
+            {/* ── Feedback Modal ── */}
+            {fbType && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-[#0A0A0F]/90 backdrop-blur-md" onClick={() => !fbSubmitting && setFbType(null)} />
+                    <Card className="relative w-full max-w-md bg-[#13131A] border-white/10 p-6 shadow-2xl">
+                        {fbSent ? (
+                            <div className="py-12 text-center">
+                                <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4 border border-emerald-500/40">
+                                    <Check className="text-emerald-500" size={32} />
+                                </div>
+                                <h3 className="text-xl font-black text-white">Thank You!</h3>
+                                <p className="text-slate-500 text-sm mt-2">Your feedback keeps NutriSnap improving.</p>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="flex items-center justify-between mb-8">
+                                    <h3 className="text-xl font-black text-white">{fbType === 'bug' ? 'Report a Bug' : 'Feature Request'}</h3>
+                                    <button onClick={() => setFbType(null)} className="text-slate-500 hover:text-white transition-colors">✕</button>
+                                </div>
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Issue Title</label>
+                                        <input id="fb-title" className={inputCls} placeholder={fbType === 'bug' ? "What's broken?" : "What's the idea?"} />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Description</label>
+                                        <textarea id="fb-desc" className={`${inputCls} h-32 resize-none`} placeholder="More details here..." />
+                                    </div>
+                                    <button 
+                                        disabled={fbSubmitting}
+                                        onClick={() => {
+                                            const t = (document.getElementById('fb-title') as HTMLInputElement).value;
+                                            const d = (document.getElementById('fb-desc') as HTMLTextAreaElement).value;
+                                            if (t && d) handleFeedback(t, d);
+                                            else alert("Please fill in both title and description");
+                                        }}
+                                        className="w-full bg-[#B8FF3C] text-[#0A0A0F] py-4 rounded-xl text-sm font-black hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-[#B8FF3C]/20 disabled:opacity-50"
+                                    >
+                                        {fbSubmitting ? "SUBMITTING..." : "SEND FEEDBACK"}
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </Card>
+                </div>
+            )}
 
             {/* ── Fixed Footer ── */}
             <div className="fixed bottom-0 left-0 lg:left-[220px] right-0 bg-[#0A0A0F]/80 backdrop-blur-xl border-t border-white/5 p-4 z-40 flex justify-center">
@@ -212,17 +376,23 @@ export default function SettingsPage() {
                         All systems operational
                     </div>
                     <div className="flex items-center gap-4 w-full sm:w-auto">
-                        <button className="flex-1 sm:flex-none text-sm font-bold text-slate-500 hover:text-white transition-colors">Discard</button>
                         <button 
+                            onClick={handleDiscard}
+                            className="flex-1 sm:flex-none text-sm font-bold text-slate-500 hover:text-white transition-colors"
+                        >
+                            Discard
+                        </button>
+                        <button 
+                            disabled={isSaving}
                             onClick={handleSave}
                             className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-8 py-3 rounded-xl text-sm font-black transition-all ${
                                 saved 
                                     ? "bg-emerald-500 text-[#0A0A0F]" 
-                                    : "bg-[#B8FF3C] text-[#0A0A0F] shadow-lg shadow-[#B8FF3C]/20 hover:scale-[1.02]"
+                                    : "bg-[#B8FF3C] text-[#0A0A0F] shadow-lg shadow-[#B8FF3C]/20 hover:scale-[1.02] disabled:opacity-50"
                             }`}
                         >
-                            {saved ? <Check size={18} /> : <Save size={18} />}
-                            {saved ? "SAVED" : "SAVE SETTINGS"}
+                            {isSaving ? <Monitor size={18} className="animate-spin" /> : (saved ? <Check size={18} /> : <Save size={18} />)}
+                            {isSaving ? "SAVING..." : (saved ? "SAVED" : "SAVE SETTINGS")}
                         </button>
                     </div>
                 </div>

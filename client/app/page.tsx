@@ -62,7 +62,7 @@ function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-[#0A0A0F]/95 backdrop-blur-md border-b border-white/5" : ""
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled || mobileOpen ? "bg-[#0A0A0F]/80 backdrop-blur-xl border-b border-white/5" : ""
         }`}
     >
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -98,7 +98,7 @@ function Navbar() {
           </Link>
           <Link
             href="/register"
-            className="bg-[#B8FF3C] hover:bg-[#d4ff6e] text-[#0A0A0F] font-black text-sm px-5 py-2.5 rounded-lg transition-colors"
+            className="hidden md:block bg-[#B8FF3C] hover:bg-[#d4ff6e] text-[#0A0A0F] font-black text-sm px-5 py-2.5 rounded-lg transition-colors"
           >
             Get Started Free
           </Link>
@@ -113,7 +113,7 @@ function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-[#0A0A0F]/98 border-t border-white/5 px-6 py-4 flex flex-col gap-4">
+        <div className="md:hidden bg-[#0A0A0F]/80 backdrop-blur-2xl border-t border-white/5 px-6 py-6 flex flex-col gap-5 animate-in fade-in slide-in-from-top-4 duration-300">
           {NAV_LINKS.map(({ label, id }) => (
             <button
               key={id}
@@ -139,18 +139,18 @@ function Navbar() {
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 function Hero() {
+  const videos = ["/video1.mp4", "/video2.mp4", "/video3.mp4"];
+  const [currentVid, setCurrentVid] = useState(0);
+
   return (
     <section className="relative min-h-screen bg-[#0A0A0F] flex flex-col items-center justify-center pt-16 overflow-hidden">
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-[#B8FF3C]/10 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="relative z-10 text-center px-6 max-w-5xl mx-auto">
-        <div className="inline-flex items-center gap-2  rounded-full px-4 py-1.5 mb-8">
-        </div>
-
-        <h1 className="text-6xl md:text-8xl font-black tracking-tight leading-none mb-4 text-white">
+        <h1 className="text-5xl md:text-8xl font-black tracking-tight leading-none mb-4 text-white">
           Snap your meal.
         </h1>
-        <h1 className="text-6xl md:text-8xl font-black tracking-tight leading-none mb-8 text-[#B8FF3C]">
+        <h1 className="text-5xl md:text-8xl font-black tracking-tight leading-none mb-8 text-[#B8FF3C]">
           Smash your goals.
         </h1>
 
@@ -160,36 +160,22 @@ function Hero() {
           workouts based on your physique goals.
         </p>
 
-        {/* Phone mockup */}
+        {/* Phone mockup with sequential videos */}
         <div className="relative mx-auto w-64 mb-12">
           <div className="absolute inset-0 bg-[#B8FF3C]/20 blur-3xl rounded-full scale-75 translate-y-8" />
           <div className="relative bg-gradient-to-b from-[#1a1a24] to-[#13131A] rounded-[2.5rem] border border-white/10 p-3 shadow-2xl">
-            <div className="bg-[#0f0f17] rounded-[2rem] overflow-hidden aspect-[9/19]">
-              <div className="w-full h-full relative bg-gradient-to-br from-[#1a2a1a] to-[#0f1a0f] flex flex-col items-center justify-center p-6 gap-4">
-                <div className="w-20 h-20 bg-[#B8FF3C]/20 rounded-2xl border border-[#B8FF3C]/30 flex items-center justify-center">
-                  <Camera size={32} className="text-[#B8FF3C]" />
-                </div>
-                <div className="space-y-2 w-full">
-                  <div className="h-2 bg-[#B8FF3C]/30 rounded-full w-3/4 mx-auto" />
-                  <div className="h-2 bg-white/10 rounded-full w-1/2 mx-auto" />
-                </div>
-                <div className="grid grid-cols-3 gap-2 w-full">
-                  {(
-                    [
-                      ["Protein", "42g", "text-emerald-400"],
-                      ["Carbs", "68g", "text-orange-400"],
-                      ["Fat", "18g", "text-blue-400"],
-                    ] as [string, string, string][]
-                  ).map(([l, v, c]) => (
-                    <div key={l} className="bg-white/5 rounded-xl p-2 text-center border border-white/5">
-                      <div className={`text-sm font-bold ${c}`}>{v}</div>
-                      <div className="text-[9px] text-slate-500">{l}</div>
-                    </div>
-                  ))}
-                </div>
-                <div className="absolute top-4 right-4 w-3 h-3 bg-[#B8FF3C] rounded-full opacity-60 animate-pulse" />
-                <div className="absolute bottom-8 left-4 w-2 h-2 bg-teal-400 rounded-full opacity-40 animate-pulse" style={{ animationDelay: "1s" }} />
-              </div>
+            <div className="bg-[#0f0f17] rounded-[2rem] overflow-hidden aspect-[9/19] relative">
+              <video
+                key={videos[currentVid]}
+                autoPlay
+                muted
+                playsInline
+                onEnded={() => setCurrentVid((v) => (v + 1) % videos.length)}
+                className="absolute inset-0 w-full h-full object-cover"
+              >
+                <source src={videos[currentVid]} type="video/mp4" />
+              </video>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0F]/60 to-transparent pointer-events-none" />
             </div>
           </div>
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 bg-[#B8FF3C] rounded-full flex items-center justify-center shadow-lg shadow-[#B8FF3C]/30">
@@ -223,48 +209,6 @@ function Hero() {
 
       <div className="w-full">
         <Marquee />
-      </div>
-    </section>
-  );
-}
-
-// ─── Video Showcase ──────────────────────────────────────────────────────────
-function VideoShowcase() {
-  const videos = [
-    { src: "/video1.mp4", title: "Smart Recognition" },
-    { src: "/video2.mp4", title: "Elite Coaching" },
-    { src: "/video3.mp4", title: "Progress Tracking" }
-  ];
-
-  return (
-    <section className="bg-[#0A0A0F] py-28 px-6 border-y border-white/5">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-black text-white mb-4">See NutriSnap in <span className="text-[#B8FF3C]">Action</span></h2>
-          <p className="text-slate-500 max-w-2xl mx-auto leading-relaxed">
-            Experience the future of fitness technology. Watch how our AI integrates seamlessly into your daily routine.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-8">
-          {videos.map((vid, i) => (
-            <div key={i} className="group relative rounded-[2rem] overflow-hidden border border-white/5 bg-slate-900/50 aspect-[9/16] shadow-2xl">
-              <video
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-700"
-              >
-                <source src={vid.src} type="video/mp4" />
-              </video>
-              <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-[#0A0A0F] to-transparent">
-                <h3 className="text-white font-black text-xl mb-1 tracking-tight">{vid.title}</h3>
-                <div className="w-8 h-1 bg-[#B8FF3C] rounded-full scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500" />
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
     </section>
   );
@@ -345,8 +289,6 @@ function HowItWorks() {
 
 // ─── Physique Spotlight ───────────────────────────────────────────────────────
 function PhysiqueSpotlight() {
-  const [slider, setSlider] = useState(50);
-
   return (
     <section className="bg-[#0D0D12] py-28 px-6 overflow-hidden">
       <div className="max-w-7xl mx-auto">
@@ -570,7 +512,7 @@ function Pricing() {
                     {f}
                   </li>
                 ))}
-                {plan.missing.map(f => (
+                {plan.missing && plan.missing.map(f => (
                   <li key={f} className="flex items-center gap-3 text-sm line-through opacity-30">
                     <div className="w-4 h-4 rounded-full flex-shrink-0 bg-white/5" />
                     {f}
@@ -743,7 +685,6 @@ export default function LandingPage() {
       <Hero />
       <Features />
       <HowItWorks />
-      <VideoShowcase />
       <PhysiqueSpotlight />
       <Stats />
       <Testimonials />

@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useSession } from "next-auth/react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Toast } from "@/components/ui/Toast";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Nutrition {
@@ -167,6 +169,12 @@ export default function AnalyzeMeal() {
     const [logLoading, setLogLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+
+    const showToast = (message: string, type: "success" | "error" | "info" = "success") => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3500);
+    };
 
     // Inline adjustment state
     const [adjGrams, setAdjGrams] = useState(0);
@@ -270,7 +278,10 @@ export default function AnalyzeMeal() {
 
     // ── Save to backend log ────────────────────────────────────────────────────
     const saveToLog = async () => {
-        if (!result || !liveNutrition || saving || !session?.user?.id) return;
+        if (!result || !liveNutrition || saving || !session?.user?.id || session.user.id === 'undefined') {
+            console.error("[DEBUG] Save attempted without valid session:", session);
+            return;
+        }
         setSaving(true);
 
         const formData = new FormData();
@@ -301,10 +312,16 @@ export default function AnalyzeMeal() {
                 body: formData,
             });
 
-            if (!res.ok) throw new Error("Save failed");
+            if (!res.ok) {
+                const errText = await res.text();
+                console.error("[DEBUG] Save failed with status", res.status, "and body:", errText);
+                throw new Error("Save failed: " + errText);
+            }
 
             const json = await res.json();
             const savedLog = json.data;
+            
+            showToast(`"${savedLog.food_name}" successfully logged!`, "success");
 
             // Push formatted entry to Zustand
             addFoodLog({
@@ -330,7 +347,7 @@ export default function AnalyzeMeal() {
             setTimeout(() => setActiveTab("log"), 800);
         } catch (err) {
             console.error("Failed to save", err);
-            alert("Failed to save to log. Please try again.");
+            showToast("Failed to save to log. Please try again.", "error");
         } finally {
             setSaving(false);
         }
@@ -376,15 +393,15 @@ export default function AnalyzeMeal() {
         <div className="p-6 sm:p-8 max-w-2xl mx-auto">
 
             {/* Header + tabs */}
-            <div className="flex items-center justify-between mb-7">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
                 <div>
-                    <h1 className="text-2xl font-black text-white">Analyze Meal</h1>
-                    <p className="text-slate-500 text-sm mt-0.5">Photo → AI → full nutrition breakdown</p>
+                    <h1 className="text-3xl font-black text-white leading-tight">Analyze Meal</h1>
+                    <p className="text-slate-500 text-sm mt-1">Photo → AI → full nutrition breakdown</p>
                 </div>
-                <div className="flex gap-1 bg-[#13131A] border border-white/8 rounded-xl p-1">
+                <div className="flex gap-1 bg-[#13131A] border border-white/8 rounded-xl p-1 w-full sm:w-auto">
                     {(["analyze", "log"] as const).map(tab => (
                         <button key={tab} onClick={() => setActiveTab(tab)}
-                            className={`px-4 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${activeTab === tab ? "bg-[#B8FF3C] text-[#0A0A0F]" : "text-slate-400 hover:text-white"
+                            className={`flex-1 sm:flex-none px-6 py-2 rounded-lg text-xs font-bold capitalize transition-all ${activeTab === tab ? "bg-[#B8FF3C] text-[#0A0A0F]" : "text-slate-400 hover:text-white"
                                 }`}>
                             {tab}
                             {tab === "log" && log.length > 0 && (
@@ -418,14 +435,14 @@ export default function AnalyzeMeal() {
                             </div>
                             <h3 className="text-white font-black text-lg mb-1">Drop your food photo here</h3>
                             <p className="text-slate-500 text-sm mb-5">or click to browse · JPG, PNG, WEBP</p>
-                            <div className="flex gap-3 justify-center">
+                            <div className="flex flex-col sm:flex-row gap-3 justify-center">
                                 <button onClick={e => { e.stopPropagation(); fileRef.current?.click(); }}
-                                    className="flex items-center gap-2 px-5 py-2.5 bg-[#B8FF3C] text-[#0A0A0F] rounded-xl text-sm font-black hover:bg-[#d4ff6e] transition-all">
-                                    <Upload size={15} /> Upload Photo
+                                    className="flex items-center justify-center gap-2 px-6 py-3.5 bg-[#B8FF3C] text-[#0A0A0F] rounded-xl text-sm font-black hover:bg-[#d4ff6e] transition-all">
+                                    <Upload size={16} /> Upload Photo
                                 </button>
                                 <button onClick={e => { e.stopPropagation(); cameraRef.current?.click(); }}
-                                    className="flex items-center gap-2 px-5 py-2.5 border border-white/10 text-slate-400 rounded-xl text-sm font-bold hover:bg-white/5 transition-all">
-                                    <Camera size={15} /> Take Photo
+                                    className="flex items-center justify-center gap-2 px-6 py-3.5 border border-white/10 text-slate-400 rounded-xl text-sm font-bold hover:bg-white/5 transition-all">
+                                    <Camera size={16} /> Take Photo
                                 </button>
                             </div>
                             <input ref={fileRef} type="file" accept="image/*" className="hidden"
@@ -493,7 +510,7 @@ export default function AnalyzeMeal() {
                                     Adjust Serving — macros update live
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     {/* Weight */}
                                     <div>
                                         <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Weight (g)</label>
@@ -540,7 +557,7 @@ export default function AnalyzeMeal() {
                                 {/* Meal type */}
                                 <div>
                                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Meal Type</label>
-                                    <div className="grid grid-cols-4 gap-2">
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                         {MEAL_TYPES.map(m => (
                                             <button key={m} onClick={() => setAdjMealType(m)}
                                                 className={`py-2 rounded-xl text-xs font-bold border transition-all ${adjMealType === m
@@ -614,7 +631,7 @@ export default function AnalyzeMeal() {
                             )}
 
                             {/* Actions */}
-                            <div className="flex gap-3 pb-4">
+                            <div className="flex flex-col sm:flex-row gap-3 pb-4">
                                 <button onClick={reset}
                                     className="flex items-center gap-2 px-5 py-3.5 rounded-xl border border-white/10 text-slate-400 text-sm font-bold hover:bg-white/5 transition-all">
                                     <RotateCcw size={15} /> New

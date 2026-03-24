@@ -21,8 +21,11 @@ router.post('/', upload.single('image'), async (req, res) => {
     try {
         const { userId, ...logData } = req.body;
         
-        if (!userId) {
-            return res.status(400).json({ success: false, error: 'UserId is required' });
+        console.log('[DEBUG] POST /api/meal-log received userId:', userId);
+        console.log('[DEBUG] logData:', JSON.stringify(logData));
+
+        if (!userId || userId === 'undefined' || userId === null) {
+            return res.status(400).json({ success: false, error: 'Valid UserId is required' });
         }
 
         // Handle nested nutrition object if sent as JSON string (common with FormData)

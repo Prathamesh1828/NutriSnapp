@@ -1,6 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useSession } from "next-auth/react";
+import { motion, AnimatePresence } from "framer-motion";
+import { CustomSelect } from "@/components/ui/Select";
+import { Toast } from "@/components/ui/Toast";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -127,10 +131,11 @@ function SmallChip({ label, active, onClick }: { label: string; active: boolean;
 
 // ── Week Builder Modal ────────────────────────────────────────────────────────
 
-function WeekBuilderModal({ week, onConfirm, onClose }: {
+function WeekBuilderModal({ week, onConfirm, onClose, showToast }: {
     week: Week;
     onConfirm: (updated: Week) => void;
     onClose: () => void;
+    showToast: (m: string, t?: "success" | "error") => void;
 }) {
     const [tab, setTab] = useState<"exercises" | "cardio">("exercises");
     const [selectedGroup, setSelectedGroup] = useState<MuscleGroup>("Chest");
@@ -214,70 +219,58 @@ function WeekBuilderModal({ week, onConfirm, onClose }: {
                     {/* ══ EXERCISES ══ */}
                     {tab === "exercises" && (
                         <>
-                            {/* Muscle groups */}
-                            <div>
-                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Muscle Group</p>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {MUSCLE_GROUPS.map(g => (
-                                        <button
-                                            key={g}
-                                            onClick={() => { setSelectedGroup(g); setPickedExercise(EXERCISES[g][0]); }}
-                                            className={`px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-black transition-all ${selectedGroup === g
-                                                    ? "bg-[#a3e635] text-black"
-                                                    : "bg-[#1a2208] border border-[#2a3a10] text-gray-500 hover:text-white"
-                                                }`}
-                                        >
-                                            {g}
-                                        </button>
-                                    ))}
+                            {/* Muscle groups & Exercises Dropdowns */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Muscle Group</p>
+                                    <CustomSelect
+                                        value={selectedGroup}
+                                        onChange={(val) => { setSelectedGroup(val as MuscleGroup); setPickedExercise(EXERCISES[val as MuscleGroup][0]); }}
+                                        options={MUSCLE_GROUPS.map(g => ({ value: g, label: g }))}
+                                        className="h-10"
+                                    />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Exercise</p>
+                                    <CustomSelect
+                                        value={pickedExercise}
+                                        onChange={setPickedExercise}
+                                        options={EXERCISES[selectedGroup].map(ex => ({ value: ex, label: ex }))}
+                                        className="h-10"
+                                    />
                                 </div>
                             </div>
 
                             {/* Picker card */}
                             <div className="bg-[#111a05] border border-[#2a3a10] rounded-xl p-3 sm:p-4 space-y-4">
-
-                                {/* Exercises */}
-                                <div>
-                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Exercise</p>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {EXERCISES[selectedGroup].map(ex => (
-                                            <Chip key={ex} label={ex} active={pickedExercise === ex} onClick={() => setPickedExercise(ex)} />
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/*
-                                  * Sets / Reps / Rest
-                                  * Mobile  : stacked (1 col) so buttons have room to breathe
-                                  * Desktop : 3 cols side-by-side
-                                  */}
+                                {/* Sets / Reps / Rest */}
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    {/* Sets */}
                                     <div>
                                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Sets</p>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {SET_OPTIONS.map(s => (
-                                                <SmallChip key={s} label={s} active={pickedSets === s} onClick={() => setPickedSets(s)} />
-                                            ))}
-                                        </div>
+                                        <CustomSelect
+                                            value={pickedSets}
+                                            onChange={setPickedSets}
+                                            options={SET_OPTIONS.map(s => ({ value: s, label: s }))}
+                                            className="h-10"
+                                        />
                                     </div>
-                                    {/* Reps */}
                                     <div>
                                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Reps</p>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {REP_OPTIONS.map(r => (
-                                                <SmallChip key={r} label={r} active={pickedReps === r} onClick={() => setPickedReps(r)} />
-                                            ))}
-                                        </div>
+                                        <CustomSelect
+                                            value={pickedReps}
+                                            onChange={setPickedReps}
+                                            options={REP_OPTIONS.map(r => ({ value: r, label: r }))}
+                                            className="h-10"
+                                        />
                                     </div>
-                                    {/* Rest */}
                                     <div>
                                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Rest</p>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {REST_OPTIONS.map(r => (
-                                                <SmallChip key={r} label={r} active={pickedRest === r} onClick={() => setPickedRest(r)} />
-                                            ))}
-                                        </div>
+                                        <CustomSelect
+                                            value={pickedRest}
+                                            onChange={setPickedRest}
+                                            options={REST_OPTIONS.map(r => ({ value: r, label: r }))}
+                                            className="h-10"
+                                        />
                                     </div>
                                 </div>
 
@@ -328,33 +321,33 @@ function WeekBuilderModal({ week, onConfirm, onClose }: {
                     {tab === "cardio" && (
                         <>
                             <div className="bg-[#111a05] border border-[#2a3a10] rounded-xl p-3 sm:p-4 space-y-4">
-                                {/* Machines */}
-                                <div>
-                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Machine / Activity</p>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {CARDIO_MACHINES.map(m => (
-                                            <Chip key={m} label={m} active={pickedMachine === m} onClick={() => setPickedMachine(m)} />
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Duration + Intensity — stack on mobile */}
+                                {/* Cardio Selectors */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Duration</p>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {CARDIO_DURATIONS.map(d => (
-                                                <SmallChip key={d} label={d} active={pickedDuration === d} onClick={() => setPickedDuration(d)} />
-                                            ))}
-                                        </div>
+                                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Machine</p>
+                                        <CustomSelect
+                                            value={pickedMachine}
+                                            onChange={setPickedMachine}
+                                            options={CARDIO_MACHINES.map(m => ({ value: m, label: m }))}
+                                            className="h-10"
+                                        />
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Intensity / Type</p>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {CARDIO_INTENSITIES.map(i => (
-                                                <SmallChip key={i} label={i} active={pickedIntensity === i} onClick={() => setPickedIntensity(i)} />
-                                            ))}
-                                        </div>
+                                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Intensity</p>
+                                        <CustomSelect
+                                            value={pickedIntensity}
+                                            onChange={setPickedIntensity}
+                                            options={CARDIO_INTENSITIES.map(i => ({ value: i, label: i }))}
+                                            className="h-10"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Duration</p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {CARDIO_DURATIONS.map(d => (
+                                            <SmallChip key={d} label={d} active={pickedDuration === d} onClick={() => setPickedDuration(d)} />
+                                        ))}
                                     </div>
                                 </div>
 
@@ -388,19 +381,19 @@ function WeekBuilderModal({ week, onConfirm, onClose }: {
                 </div>
 
                 {/* ── Footer ── */}
-                <div className="px-4 sm:px-5 py-3.5 border-t border-[#2a3a10] shrink-0 flex items-center justify-between gap-3 bg-[#0a100a]">
-                    <p className="text-[11px] text-gray-600 shrink-0">
+                <div className="px-4 sm:px-5 py-4 pb-14 sm:pb-4 border-t border-[#2a3a10] shrink-0 flex items-center justify-between gap-3 bg-[#0a100a]">
+                    <p className="text-[11px] text-gray-600 shrink-0 hidden sm:block">
                         {exercises.length} ex · {cardio.length} cardio
                     </p>
-                    <div className="flex gap-2 sm:gap-3">
-                        <button onClick={onClose} className="px-3 sm:px-4 py-2 text-xs font-bold text-gray-500 hover:text-white transition-colors">
+                    <div className="flex gap-2 sm:gap-3 w-full sm:w-auto">
+                        <button onClick={onClose} className="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs font-bold text-gray-500 hover:text-white transition-colors">
                             Cancel
                         </button>
                         <button
                             onClick={handleConfirm}
-                            className="bg-[#a3e635] hover:bg-[#b5f03f] text-black font-black text-xs px-4 sm:px-6 py-2.5 rounded-xl transition-colors shadow-lg shadow-[#a3e635]/20 whitespace-nowrap"
+                            className="flex-1 sm:flex-none bg-[#a3e635] hover:bg-[#b5f03f] text-black font-black text-xs px-4 sm:px-6 py-2.5 rounded-xl transition-colors shadow-lg shadow-[#a3e635]/20 whitespace-nowrap"
                         >
-                            ✓ CONFIRM WEEK
+                            ✓ CONFIRM
                         </button>
                     </div>
                 </div>
@@ -411,7 +404,7 @@ function WeekBuilderModal({ week, onConfirm, onClose }: {
 
 // ── Create Program Modal ──────────────────────────────────────────────────────
 
-function CreateProgramModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) {
+function CreateProgramModal({ onClose, onSuccess, showToast }: { onClose: () => void; onSuccess: () => void; showToast: (m: string, t?: "success" | "error") => void }) {
     const [programName, setProgramName] = useState("");
     const [category, setCategory] = useState("Bulking");
     const [duration, setDuration] = useState("8");
@@ -448,14 +441,15 @@ function CreateProgramModal({ onClose, onSuccess }: { onClose: () => void; onSuc
                     gradientFrom: category === "Cutting" ? "#1a1a1a" : category === "Bulking" ? "#f5e6c8" : "#1a1a2e",
                     gradientTo: category === "Cutting" ? "#0a0a0a" : category === "Bulking" ? "#d4a96a" : "#0d0d1a",
                     weeksData: weeks,
+                    coach: useSession().data?.user?.id
                 }),
             });
             const data = await res.json();
-            if (data.success) { onSuccess(); onClose(); }
-            else alert(data.error || "Failed to create program");
+            if (data.success) { showToast("Program created successfully!", "success"); onSuccess(); onClose(); }
+            else showToast(data.error || "Failed to create program", "error");
         } catch (err) {
             console.error(err);
-            alert("Error creating program");
+            showToast("Error creating program", "error");
         } finally {
             setIsSaving(false);
         }
@@ -491,19 +485,16 @@ function CreateProgramModal({ onClose, onSuccess }: { onClose: () => void; onSuc
                                     onChange={e => setProgramName(e.target.value)}
                                 />
                             </div>
-                            <div>
-                                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Category</label>
-                                <select
-                                    className="w-full bg-[#1a2208] border border-[#2a3a10] rounded-xl px-4 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-[#a3e635]/50 appearance-none"
-                                    value={category}
-                                    onChange={e => setCategory(e.target.value)}
-                                >
-                                    {["Strength", "Cutting", "Bulking", "Maintenance"].map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
+                             <div>
+                                <CustomSelect 
+                                    label="Category" 
+                                    value={category} 
+                                    onChange={setCategory} 
+                                    options={["Strength", "Cutting", "Bulking", "Maintenance"].map(c => ({ value: c, label: c }))} 
+                                />
                             </div>
                         </div>
 
-                        {/* Duration + Level */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Duration (Weeks)</label>
@@ -515,15 +506,12 @@ function CreateProgramModal({ onClose, onSuccess }: { onClose: () => void; onSuc
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Level</label>
-                                <div className="flex gap-1 bg-[#1a2208] p-1 rounded-xl border border-[#2a3a10]">
-                                    {(["Beginner", "Intermediate", "Advanced"] as Level[]).map(l => (
-                                        <button key={l} onClick={() => setDifficulty(l)}
-                                            className={`flex-1 py-1.5 rounded-lg text-[10px] font-black transition-all ${difficulty === l ? "bg-[#a3e635] text-black" : "text-gray-500 hover:text-white"}`}>
-                                            {l.toUpperCase()}
-                                        </button>
-                                    ))}
-                                </div>
+                                <CustomSelect 
+                                    label="Level" 
+                                    value={difficulty} 
+                                    onChange={(v) => setDifficulty(v as Level)} 
+                                    options={["Beginner", "Intermediate", "Advanced", "Elite"].map(l => ({ value: l, label: l }))} 
+                                />
                             </div>
                         </div>
 
@@ -590,7 +578,7 @@ function CreateProgramModal({ onClose, onSuccess }: { onClose: () => void; onSuc
 
             {/* Week Builder on top */}
             {editingWeek && (
-                <WeekBuilderModal week={editingWeek} onConfirm={handleWeekConfirm} onClose={() => setEditingWeek(null)} />
+                <WeekBuilderModal week={editingWeek} onConfirm={handleWeekConfirm} onClose={() => setEditingWeek(null)} showToast={showToast} />
             )}
         </>
     );
@@ -598,21 +586,32 @@ function CreateProgramModal({ onClose, onSuccess }: { onClose: () => void; onSuc
 
 // ── Assign Modal ──────────────────────────────────────────────────────────────
 
-function AssignModal({ program, clients, onClose }: { program: Program; clients: CoachClient[]; onClose: () => void }) {
+function AssignModal({ program, clients, onClose, showToast }: { program: Program; clients: CoachClient[]; onClose: () => void; showToast: (m: string, t?: "success" | "error") => void }) {
     const [selected, setSelected] = useState<string[]>([]);
     const [isAssigning, setAssigning] = useState(false);
 
     const toggle = (id: string) => setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
     const handleAssign = async () => {
-        if (selected.length === 0) return alert("Select at least one client");
+        if (selected.length === 0) return showToast("Select at least one client", "error");
         setAssigning(true);
         try {
-            const res = await fetch("/api/programs/assign", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ programId: program.id, clientIds: selected }) });
+            const res = await fetch("/api/programs/assign", { 
+                method: "POST", 
+                headers: { "Content-Type": "application/json" }, 
+                body: JSON.stringify({ 
+                    programId: program.id, 
+                    clientIds: selected,
+                    coachId: (await fetch("/api/auth/session").then(r => r.json())).user?.id
+                }) 
+            });
             const data = await res.json();
-            if (data.success) { alert("Program assigned!"); onClose(); }
-            else alert(data.error || "Failed to assign");
-        } catch { alert("Error assigning program"); }
+            if (data.success) { 
+                showToast(`Task assigned to ${selected.length} client${selected.length > 1 ? 's' : ''}`, "success"); 
+                onClose(); 
+            }
+            else showToast(data.error || "Failed to assign", "error");
+        } catch { showToast("Error assigning program", "error"); }
         finally { setAssigning(false); }
     };
 
@@ -669,10 +668,9 @@ function ProgramCard({ program, onAssign }: { program: Program; onAssign: (p: Pr
                     <span className="flex items-center gap-1 text-[#a3e635] text-xs font-semibold whitespace-nowrap ml-2">👥 {program.clients}</span>
                 </div>
                 <p className="text-xs text-gray-500 leading-relaxed line-clamp-2 mb-3 flex-1">{program.description}</p>
-                <div className="flex items-center gap-2 pt-2 border-t border-[#2a3a10]">
-                    <button className="flex items-center gap-1 text-xs text-gray-400 hover:text-white transition-colors px-2 py-1.5 rounded-lg hover:bg-[#1a2208]">✏️ Edit</button>
+                <div className="flex items-center pt-2 border-t border-[#2a3a10] w-full">
                     <button onClick={() => onAssign(program)}
-                        className="flex items-center gap-1 text-xs font-semibold text-black bg-[#a3e635] hover:bg-[#b5f03f] px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors ml-auto shadow-md shadow-[#a3e635]/20">
+                        className="w-full flex items-center justify-center gap-1 text-xs font-black text-black bg-[#a3e635] hover:bg-[#b5f03f] px-3 py-2.5 rounded-xl transition-all shadow-md shadow-[#a3e635]/15">
                         📌 Assign
                     </button>
                 </div>
@@ -706,6 +704,12 @@ export default function ProgramsPage() {
     const [programs, setPrograms] = useState<Program[]>([]);
     const [clients, setClients] = useState<CoachClient[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
+
+    const showToast = (message: string, type: "success" | "error" | "info" = "success") => {
+        setToast({ message, type });
+        setTimeout(() => setToast(null), 3500);
+    };
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -728,7 +732,7 @@ export default function ProgramsPage() {
     });
 
     return (
-        <div className="flex flex-col h-[calc(100vh-120px)] overflow-hidden -mx-4 md:-mx-6 mt-[-1.5rem] mb-[-1.5rem]">
+        <div className="flex flex-col h-full overflow-hidden -mx-4 md:-mx-6 mt-[-1.5rem] mb-[-1.5rem]">
 
             {/* Header */}
             <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-0 shrink-0">
@@ -780,15 +784,19 @@ export default function ProgramsPage() {
                         <button onClick={() => setShowCreate(true)} className="text-[#a3e635] text-xs font-bold mt-2 hover:underline">Create your first protocol</button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 pb-20">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6 pb-40 lg:pb-24">
                         {filtered.map(p => <ProgramCard key={p.id} program={p} onAssign={setAssignProgram} />)}
                         <CreateCard onClick={() => setShowCreate(true)} />
                     </div>
                 )}
             </div>
 
-            {showCreate && <CreateProgramModal onClose={() => setShowCreate(false)} onSuccess={fetchData} />}
-            {assignProgram && <AssignModal program={assignProgram} clients={clients} onClose={() => setAssignProgram(null)} />}
+            {showCreate && <CreateProgramModal onClose={() => setShowCreate(false)} onSuccess={fetchData} showToast={showToast} />}
+            {assignProgram && <AssignModal program={assignProgram} clients={clients} onClose={() => setAssignProgram(null)} showToast={showToast} />}
+
+            <AnimatePresence>
+                {toast && <Toast message={toast.message} type={toast.type} />}
+            </AnimatePresence>
         </div>
     );
 }

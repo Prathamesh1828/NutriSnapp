@@ -58,7 +58,7 @@ io.on('connection', (socket) => {
     // Handle incoming messages
     socket.on('send_message', async (data) => {
         try {
-            const { chatId, senderId, text, bullets } = data;
+            const { chatId, senderId, text, image, bullets } = data;
 
             // 1. Save to database
             const Message = require('./models/Message');
@@ -67,13 +67,15 @@ io.on('connection', (socket) => {
             const newMessage = await Message.create({
                 chatId,
                 senderId,
-                text,
+                text: text || '',
+                image,
                 bullets: bullets || []
             });
 
-            // 2. Update the Chat's last message timestamp
+            // 2. Update the Chat's last message timestamp & excerpt
+            const historyText = image ? '📷 Photo' : (text || '');
             await Chat.findByIdAndUpdate(chatId, {
-                lastMessage: text,
+                lastMessage: historyText,
                 updatedAt: new Date()
             });
 
@@ -92,7 +94,7 @@ io.on('connection', (socket) => {
                         createNotification({
                             userId: participant._id,
                             title: `New message from ${senderName}`,
-                            message: text.length > 50 ? text.substring(0, 47) + "..." : text,
+                            message: image ? 'Shared a photo' : (text?.length > 50 ? text.substring(0, 47) + "..." : text),
                             type: 'message',
                             metadata: { chatId, senderId }
                         });
@@ -130,6 +132,19 @@ app.use('/api/exercises', exerciseRoutes);
 app.use('/api/workouts', workoutRoutes);
 app.use('/api/programs', programsRoutes);
 app.use('/api/stats', statsRoutes);
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+    console.error('Unhandled Global Error:', err);
+    if (res.headersSent) {
+        return next(err);
+    }
+    const safeError = err instanceof Error ? err.message : String(err);
+    res.status(500).json({
+        success: false,
+        error: 'Server Error: ' + safeError
+    });
+});
 
 const PORT = process.env.PORT || 5000;
 

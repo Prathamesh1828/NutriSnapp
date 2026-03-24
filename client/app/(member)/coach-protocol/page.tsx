@@ -106,10 +106,10 @@ function WeekDetailCard({ week, index }: { week: Week; index: number }) {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                    <p className={`text-sm sm:text-base font-black uppercase tracking-tight transition-colors ${open ? "text-[#B8FF3C]" : "text-white group-hover:text-[#B8FF3C]"}`}>
+                    <p className={`text-sm sm:text-lg font-black uppercase tracking-tight transition-colors ${open ? "text-[#B8FF3C]" : "text-white group-hover:text-[#B8FF3C]"}`}>
                         {week.name}
                     </p>
-                    <p className="text-[10px] sm:text-[11px] text-slate-500 font-bold tracking-wider uppercase mt-0.5 truncate">{week.detail}</p>
+                    <p className="hidden sm:block text-[11px] text-slate-500 font-bold tracking-wider uppercase mt-0.5 truncate">{week.detail}</p>
                     {/* Mini badges */}
                     {hasContent && (
                         <div className="flex flex-wrap gap-1.5 mt-2">
@@ -155,31 +155,33 @@ function WeekDetailCard({ week, index }: { week: Week; index: number }) {
                             </div>
                             <div className="space-y-2">
                                 {week.exercises!.map((ex, i) => (
-                                    <div key={ex.id} className="flex items-start gap-3 bg-white/[0.03] border border-white/5 rounded-xl sm:rounded-2xl p-3 sm:p-4 hover:border-white/10 transition-colors group">
-                                        {/* Index */}
-                                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/15 flex items-center justify-center text-[10px] font-black text-[#B8FF3C] shrink-0 mt-0.5">
-                                            {i + 1}
-                                        </div>
+                                    <div key={ex.id} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 bg-white/[0.03] border border-white/5 rounded-2xl p-4 sm:p-4 hover:border-white/10 transition-colors group">
+                                        <div className="flex items-center gap-3">
+                                            {/* Index */}
+                                            <div className="w-8 h-8 rounded-lg bg-[#B8FF3C]/10 border border-[#B8FF3C]/15 flex items-center justify-center text-[11px] font-black text-[#B8FF3C] shrink-0">
+                                                {i + 1}
+                                            </div>
 
-                                        {/* Name + note */}
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-black text-white truncate">{ex.name}</p>
-                                            {ex.note && (
-                                                <p className="text-[10px] text-slate-500 italic mt-0.5 truncate">📝 {ex.note}</p>
-                                            )}
+                                            {/* Name + note */}
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-black text-white sm:truncate group-hover:text-[#B8FF3C] transition-colors">{ex.name}</p>
+                                                {ex.note && (
+                                                    <p className="text-[10px] text-slate-500 italic mt-0.5 truncate">📝 {ex.note}</p>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {/* Stats row */}
-                                        <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-                                            <span className="flex items-center gap-1 bg-white/5 border border-white/5 px-2 py-1 rounded-lg text-[10px] font-black text-slate-300">
-                                                <RotateCcw size={9} className="text-slate-500" />
+                                        <div className="flex items-center gap-2 sm:ml-auto flex-wrap sm:flex-nowrap">
+                                            <span className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-white/5 border border-white/5 px-3 py-1.5 rounded-lg text-[10px] font-black text-slate-300">
+                                                <RotateCcw size={10} className="text-slate-500" />
                                                 {ex.sets}×
                                             </span>
-                                            <span className="flex items-center gap-1 bg-[#B8FF3C]/10 border border-[#B8FF3C]/15 px-2 py-1 rounded-lg text-[10px] font-black text-[#B8FF3C]">
+                                            <span className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-[#B8FF3C]/10 border border-[#B8FF3C]/15 px-3 py-1.5 rounded-lg text-[10px] font-black text-[#B8FF3C] whitespace-nowrap">
                                                 {ex.reps} reps
                                             </span>
-                                            <span className="flex items-center gap-1 bg-white/5 border border-white/5 px-2 py-1 rounded-lg text-[10px] font-black text-slate-400">
-                                                <Timer size={9} className="text-slate-500" />
+                                            <span className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 bg-white/5 border border-white/5 px-3 py-1.5 rounded-lg text-[10px] font-black text-slate-400">
+                                                <Timer size={10} className="text-slate-500" />
                                                 {ex.rest}
                                             </span>
                                         </div>
@@ -270,16 +272,16 @@ function ProgramDetail({ program, onBack }: { program: AssignedProgram; onBack: 
                 </div>
 
                 {/* Meta strip */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-white/5 border-t border-white/5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 border-t border-white/5 divide-white/5 sm:divide-x">
                     {[
                         { icon: <User size={14} />, label: "Coach", value: program.coachInfo?.name?.split(" ")[0] ?? "Unknown" },
                         { icon: <Calendar size={14} />, label: "Assigned", value: new Date(program.assignedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) },
                         { icon: <Dumbbell size={14} />, label: "Duration", value: `${program.weeks} Weeks` },
                         { icon: <Flame size={14} />, label: "Exercises", value: `${totalExercises} total` },
                     ].map((m, i) => (
-                        <div key={i} className="flex items-center gap-2.5 px-4 sm:px-5 py-3 sm:py-4">
+                        <div key={i} className={`flex items-center gap-2.5 px-4 sm:px-5 py-3 sm:py-4 ${i < 2 ? "border-b sm:border-b-0 border-white/5" : ""}`}>
                             <div className="text-[#B8FF3C] shrink-0">{m.icon}</div>
-                            <div>
+                            <div className="min-w-0">
                                 <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest">{m.label}</p>
                                 <p className="text-xs sm:text-sm font-black text-white mt-0.5 truncate">{m.value}</p>
                             </div>
@@ -436,7 +438,7 @@ export default function CoachPage() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto py-2">
+        <div className="max-w-6xl mx-auto py-2 pb-32">
             {/* Header */}
             <div className="mb-8 sm:mb-12">
                 <div className="flex items-center gap-3 mb-2">

@@ -236,7 +236,7 @@ export default function CoachDashboard() {
     if (loading) return <div className="flex items-center justify-center min-h-[400px] text-white/50">Loading coach dashboard...</div>;
 
     return (
-        <div className="space-y-5 animate-fade-in">
+        <div className="space-y-5 animate-fade-in pb-32">
             <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
                 {displayStats.map((c) => <StatCard key={c.label} {...c} />)}
             </div>

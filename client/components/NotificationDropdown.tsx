@@ -202,7 +202,7 @@ export default function NotificationDropdown() {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-[#13131A] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                <div className="fixed inset-x-4 top-16 mt-2 sm:absolute sm:inset-auto sm:right-0 sm:w-80 bg-[#13131A] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
                     <div className="p-4 border-b border-white/5 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <h3 className="text-sm font-black text-white">Notifications</h3>

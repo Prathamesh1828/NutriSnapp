@@ -9,6 +9,7 @@ import {
     Droplets, Bell, BellOff, Sparkles, Save, X,
     Shield, Trash2, LogOut, Loader2
 } from "lucide-react";
+import { CustomSelect } from "@/components/ui/Select";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface ProfileData {
@@ -96,23 +97,6 @@ function TextInput({ value, onChange, placeholder, type = "text" }: {
     );
 }
 
-function SelectInput({ value, onChange, options }: {
-    value: string; onChange: (v: string) => void;
-    options: { value: string; label: string }[];
-}) {
-    return (
-        <div className="relative">
-            <select
-                value={value}
-                onChange={e => onChange(e.target.value)}
-                className="w-full bg-[#0D0D12] border border-white/8 rounded-xl px-4 py-3 text-white text-sm appearance-none focus:outline-none focus:border-[#B8FF3C]/50 transition-all pr-10"
-            >
-                {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-        </div>
-    );
-}
 
 function Toggle({ value, onChange }: { value: boolean; onChange: () => void }) {
     return (
@@ -371,7 +355,7 @@ export default function ProfilePage() {
                                             <TextInput value={data.lastName} onChange={v => update({ lastName: v })} placeholder="Last Name" />
                                         </Field>
                                         <Field label="Gender">
-                                            <SelectInput value={data.gender} onChange={v => update({ gender: v })} options={[
+                                            <CustomSelect value={data.gender} onChange={v => update({ gender: v })} options={[
                                                 { value: "male", label: "Male" },
                                                 { value: "female", label: "Female" },
                                                 { value: "other", label: "Other" },
@@ -384,7 +368,7 @@ export default function ProfilePage() {
                                             <TextInput value={data.email} onChange={() => {}} placeholder="Email" type="email" />
                                         </Field>
                                         <Field label="Health Goal">
-                                            <SelectInput value={data.goal} onChange={v => update({ goal: v })} options={[
+                                            <CustomSelect value={data.goal} onChange={v => update({ goal: v })} options={[
                                                 { value: "cut", label: "🔥 Cut — Lose fat" },
                                                 { value: "maintain", label: "⚖️ Maintain — Stay lean" },
                                                 { value: "bulk", label: "💪 Bulk — Build muscle" },

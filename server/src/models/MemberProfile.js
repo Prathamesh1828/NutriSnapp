@@ -15,6 +15,7 @@ const memberProfileSchema = new mongoose.Schema({
     targetProtein: { type: Number, required: true },
     targetCarbs: { type: Number, required: true },
     targetFat: { type: Number, required: true },
+    targetWater: { type: Number, default: 3000 },
     aiAdaptive: { type: Boolean, default: true },
     notifications: { type: Boolean, default: true },
 }, { timestamps: true });

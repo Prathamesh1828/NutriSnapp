@@ -2,7 +2,11 @@
 
 import { useMemo, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { TrendingUp, TrendingDown, Minus, Bell, Lightbulb, Activity, ArrowRight, Plus } from "lucide-react";
+import Link from "next/link";
+import { 
+    TrendingUp, TrendingDown, Minus, Bell, Lightbulb, 
+    Activity, ArrowRight, Plus, Dumbbell 
+} from "lucide-react";
 import {
     AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
     ResponsiveContainer, ReferenceLine, Cell, CartesianGrid
@@ -106,10 +110,34 @@ export default function DashboardPage() {
     const { data: session } = useSession();
 
     const [todayStr, setTodayStr] = useState("");
+    const [activePlan, setActivePlan] = useState<any>(null);
     const [mounted, setMounted] = useState(false);
     const [notifications, setNotifications] = useState<any[]>([]);
-    const [showNotifications, setShowNotifications] = useState(false);
     
+    const fetchActivePlan = async () => {
+        if (!session?.user?.id) return;
+        try {
+            const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+            const res = await fetch(`${apiBase}/api/workouts/active?userId=${session?.user?.id}`);
+            const json = await res.json();
+            if (json.success) setActivePlan(json.data);
+        } catch (error) {
+            console.error("Failed to fetch active plan", error);
+        }
+    };
+
+    const fetchNotifications = async () => {
+        if (!session?.user?.id) return;
+        try {
+            const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+            const res = await fetch(`${apiBase}/api/user/notifications/${session?.user?.id}`);
+            const json = await res.json();
+            if (json.success) setNotifications(json.data);
+        } catch (error) {
+            console.error("Failed to fetch notifications", error);
+        }
+    };
+
     useEffect(() => {
         setMounted(true);
         const now = new Date();
@@ -120,19 +148,9 @@ export default function DashboardPage() {
 
         if (session?.user?.id) {
             fetchNotifications();
+            fetchActivePlan();
         }
     }, [session]);
-
-    const fetchNotifications = async () => {
-        try {
-            const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-            const res = await fetch(`${apiBase}/api/user/notifications/${session?.user?.id}`);
-            const json = await res.json();
-            if (json.success) setNotifications(json.data);
-        } catch (error) {
-            console.error("Failed to fetch notifications", error);
-        }
-    };
 
     const markAsRead = async (id: string) => {
         try {
@@ -233,7 +251,7 @@ export default function DashboardPage() {
         return entry ? entry.amount : 0;
     }, [waterLog, todayStr]);
 
-    const waterTarget = 3000;
+    const waterTarget = user?.targetWater || 3000;
     const waterPct = Math.round((todayWater / waterTarget) * 100);
 
     // Dynamic AI Message
@@ -361,6 +379,66 @@ export default function DashboardPage() {
                         </p>
                     </div>
                 </div>
+            </div>
+
+            {/* Workout Section */}
+            <div className="bg-[#13131A] border border-white/6 rounded-2xl p-5">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <Dumbbell size={18} className="text-[#B8FF3C]" />
+                        <h3 className="text-base font-black text-white">Active Workout Program</h3>
+                    </div>
+                    <Link href="/workout" className="text-xs text-[#B8FF3C] font-bold flex items-center gap-1 hover:text-[#d4ff6e] transition-colors">
+                        Manage Plan <ArrowRight size={12} />
+                    </Link>
+                </div>
+
+                {activePlan ? (
+                    <div className="space-y-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                            <div>
+                                <div className="text-lg font-black text-white">{activePlan.title}</div>
+                                <div className="text-xs text-slate-500 mt-1 uppercase tracking-widest font-black">
+                                    {activePlan.days?.length ? `${activePlan.days.length} Training Blocks` : `${activePlan.exercises?.length || 0} Exercises`} · {activePlan.weeks || 4} Weeks
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="text-center">
+                                    <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">Status</div>
+                                    <div className="text-sm font-black text-white">In Progress</div>
+                                </div>
+                                <div className="h-8 w-px bg-white/10" />
+                                <Link href="/workout" className="bg-[#B8FF3C] text-[#0A0A0F] text-xs font-black px-4 py-2 rounded-lg hover:bg-[#c9ff5f] transition-colors">
+                                    Open Plan
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Quick View of Exercises */}
+                        {((activePlan.exercises?.length > 0) || (activePlan.days?.length > 0)) && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {(activePlan.exercises?.slice(0, 3) || activePlan.days?.[0]?.exercises?.slice(0, 3) || []).map((ex: any, idx: number) => (
+                                    <div key={idx} className="p-3 rounded-xl bg-white/[0.03] border border-white/5 flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-[#B8FF3C]/10 flex items-center justify-center text-[#B8FF3C] text-xs font-black">
+                                            {idx + 1}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <div className="text-xs font-bold text-white truncate">{ex.name}</div>
+                                            <div className="text-[10px] text-slate-500">{ex.sets} sets · {ex.reps} reps</div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="text-center py-6 border border-dashed border-white/10 rounded-xl">
+                        <p className="text-sm text-slate-500 mb-3">No active workout program found.</p>
+                        <Link href="/workout" className="inline-flex items-center gap-2 text-xs font-bold text-[#B8FF3C] hover:text-[#d4ff6e]">
+                            Create your first plan <Plus size={12} />
+                        </Link>
+                    </div>
+                )}
             </div>
 
             {/* Weekly Summary */}

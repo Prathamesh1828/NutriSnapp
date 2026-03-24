@@ -31,6 +31,7 @@ export interface IMemberProfile {
   targetProtein: number;
   targetCarbs: number;
   targetFat: number;
+  targetWater?: number;
   aiAdaptive: boolean;
   notifications: boolean;
 }

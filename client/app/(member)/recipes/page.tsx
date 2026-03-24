@@ -80,29 +80,30 @@ function RecipeCard({ recipe, onClick, isFavorite, onToggleFavorite }: {
             <div className="relative overflow-hidden aspect-[4/3]">
                 <img src={recipe.image} alt={recipe.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-black/65 backdrop-blur-sm text-white text-xs font-black px-2.5 py-1 rounded-full">
-                    <Flame size={10} className="text-[#B8FF3C]" /> {Math.round(recipe.calories || 0)} kcal
+                <div className="absolute top-2.5 left-2.5 bg-black/75 backdrop-blur-md rounded-2xl p-2 border border-white/5 shadow-2xl flex flex-col items-center">
+                    <Flame size={14} className="text-[#B8FF3C] mb-0.5" />
+                    <span className="text-[10px] font-black text-white">{Math.round(recipe.calories || 0)}</span>
                 </div>
-                <div className="absolute top-2.5 right-2.5 flex items-center gap-2 bg-black/70 backdrop-blur-md text-white text-[10px] font-black px-3 py-1.5 rounded-full border border-white/5 shadow-lg">
-                    <div className="flex items-center gap-1.5 border-r border-white/15 pr-2.5">
+                <div className="absolute bottom-2.5 right-2.5 flex items-center gap-2 bg-black/70 backdrop-blur-md text-white text-[9px] font-black px-2.5 py-1.5 rounded-xl border border-white/5 shadow-lg">
+                    <div className="flex items-center gap-1.5 border-r border-white/15 pr-2">
                         <Clock size={10} className="text-slate-400" /> 
                         <span>{recipe.readyInMinutes || 0}m</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-red-500 animate-pulse">
+                    <div className="flex items-center gap-1 text-red-500">
                         <Play size={8} fill="currentColor" /> 
-                        <span className="tracking-widest">VIDEO</span>
+                        <span className="tracking-tighter">WATCH</span>
                     </div>
                 </div>
 
-                {/* Favorite Button */}
+                {/* Favorite Button (Top Right) */}
                 <button
                     onClick={(e) => { e.stopPropagation(); onToggleFavorite?.(e); }}
-                    className={`absolute bottom-2.5 right-2.5 p-2 rounded-xl backdrop-blur-md border transition-all ${isFavorite
-                        ? 'bg-red-500/20 border-red-500/40 text-red-500'
+                    className={`absolute top-2.5 right-2.5 p-2 rounded-2xl backdrop-blur-md border z-20 transition-all ${isFavorite
+                        ? 'bg-red-500/20 border-red-500/40 text-red-500 shadow-lg shadow-red-500/20'
                         : 'bg-black/40 border-white/10 text-white/60 hover:text-white hover:bg-black/60 shadow-lg'
                         }`}
                 >
-                    <Heart size={14} fill={isFavorite ? "currentColor" : "none"} />
+                    <Heart size={15} fill={isFavorite ? "currentColor" : "none"} />
                 </button>
 
                 {/* Hover Play Overlay */}
@@ -122,9 +123,9 @@ function RecipeCard({ recipe, onClick, isFavorite, onToggleFavorite }: {
                 </div>
                 <div className="grid grid-cols-3 gap-1.5">
                     {[
-                        { val: `${Math.round(recipe.protein)}G`, label: "PROTEIN", color: "text-[#B8FF3C]" },
-                        { val: `${Math.round(recipe.carbs)}G`, label: "CARBS", color: "text-orange-400" },
-                        { val: `${Math.round(recipe.fat)}G`, label: "FATS", color: "text-yellow-400" },
+                        { val: `${Math.round(recipe.protein || 0)}G`, label: "PROTEIN", color: "text-[#B8FF3C]" },
+                        { val: `${Math.round(recipe.carbs || 0)}G`, label: "CARBS", color: "text-orange-400" },
+                        { val: `${Math.round(recipe.fat || 0)}G`, label: "FATS", color: "text-yellow-400" },
                     ].map(({ val, label, color }) => (
                         <div key={label} className="bg-[#0A0A0F] rounded-xl py-2 text-center border border-white/5">
                             <div className={`text-xs font-black ${color}`}>{val}</div>
@@ -433,12 +434,18 @@ export default function RecipesPage() {
             {
                 mealPlan.length > 0 && (
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-base font-black text-white flex items-center gap-2">
-                                <CalendarDays size={18} className="text-[#B8FF3C]" /> Weekly Meal Plan
-                                <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded-full text-slate-500">{mealPlan.length} Planned</span>
-                            </h2>
-                            <button onClick={() => setMealPlannerOpen(true)} className="text-[10px] text-[#B8FF3C] font-bold uppercase tracking-wider hover:underline">View Full Schedule</button>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <h2 className="text-xl font-black text-white flex items-center gap-2">
+                                    <CalendarDays size={20} className="text-[#B8FF3C]" /> Weekly Meal Plan
+                                </h2>
+                                <span className="text-[10px] bg-[#B8FF3C]/10 border border-[#B8FF3C]/20 px-2.5 py-1 rounded-full text-[#B8FF3C] font-black uppercase tracking-wider">
+                                    {mealPlan.length} Planned
+                                </span>
+                            </div>
+                            <button onClick={() => setMealPlannerOpen(true)} className="text-[11px] text-slate-400 font-bold uppercase tracking-[0.2em] hover:text-[#B8FF3C] transition-colors text-left sm:text-right">
+                                View Full Schedule
+                            </button>
                         </div>
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                             {mealPlan.slice(0, 4).map((p: PlannedMeal) => (
@@ -449,7 +456,8 @@ export default function RecipesPage() {
                                         isFavorite={!!globalFavorites.find((f: Recipe) => f.id === p.recipe.id)}
                                         onToggleFavorite={() => toggleFavorite(p.recipe)}
                                     />
-                                    <div className="absolute top-2 left-2 bg-[#B8FF3C] text-[#0A0A0F] text-[9px] font-black px-2 py-1 rounded-lg shadow-lg">
+                                    {/* Day Badge (Bottom Left) */}
+                                    <div className="absolute bottom-2.5 left-2.5 bg-[#B8FF3C] text-[#0A0A0F] text-[10px] font-black px-3 py-1.5 rounded-xl shadow-2xl shadow-[#B8FF3C]/30 z-20">
                                         {p.day.toUpperCase()}
                                     </div>
                                     <button
@@ -468,26 +476,9 @@ export default function RecipesPage() {
             {/* Recommended section */}
             <div>
                 {/* Section header */}
-                <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
-                    <h2 className="text-base font-black text-white">Recommended for your Goal</h2>
-                    <div className="flex items-center gap-2 flex-wrap">
-                        {/* Desktop filter chips */}
-                        <div className="hidden sm:flex items-center gap-2 flex-wrap">
-                            {FILTER_TAGS.map(tag => (
-                                <button key={tag} onClick={() => handleToggleFilter(tag)}
-                                    className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-all ${activeFilters.includes(tag)
-                                        ? "border-[#B8FF3C] bg-[#B8FF3C]/15 text-[#B8FF3C]"
-                                        : "border-white/10 text-slate-400 hover:border-white/25 hover:text-white"
-                                        }`}>{tag}</button>
-                            ))}
-                        </div>
-                        {/* Mobile filter toggle */}
-                        <button onClick={() => setShowFilters(v => !v)}
-                            className={`sm:hidden flex items-center gap-1.5 text-xs font-bold border px-3 py-1.5 rounded-full transition-colors ${activeFilters.length > 0 ? "border-[#B8FF3C] text-[#B8FF3C] bg-[#B8FF3C]/10" : "border-white/10 text-slate-400"
-                                }`}>
-                            <Filter size={12} /> Filters {activeFilters.length > 0 && `(${activeFilters.length})`}
-                        </button>
-                        {/* View All / Show Less */}
+                <div className="flex flex-col space-y-5 mb-6">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-xl font-black text-white">Recommended for your Goal</h2>
                         {!loading && !error && recipes.length > PAGE_SIZE_DEFAULT && (
                             <button onClick={() => setViewAll(v => !v)}
                                 className="text-xs text-[#B8FF3C] font-bold flex items-center gap-1 hover:text-[#d4ff6e] transition-colors">
@@ -498,6 +489,19 @@ export default function RecipesPage() {
                                 )}
                             </button>
                         )}
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                        {/* Horizontal scrolling filters for all screens */}
+                        <div className="flex-1 flex items-center gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1">
+                            {FILTER_TAGS.map(tag => (
+                                <button key={tag} onClick={() => handleToggleFilter(tag)}
+                                    className={`whitespace-nowrap text-[11px] font-black uppercase tracking-wider px-4 py-2 rounded-xl border transition-all ${activeFilters.includes(tag)
+                                        ? "border-[#B8FF3C] bg-[#B8FF3C] text-[#0A0A0F]"
+                                        : "border-white/5 bg-[#13131A] text-slate-500 hover:border-white/20 hover:text-white"
+                                        }`}>{tag}</button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 

@@ -106,19 +106,21 @@ router.get('/member/:userId', async (req, res) => {
             .populate('program')
             .populate('coach', 'firstName lastName email');
         
-        const programs = assignments.map(a => {
-            const assignmentObj = a.toObject();
-            return {
-                ...a.program.toObject(),
-                assignmentId: a._id,
-                coachInfo: {
-                    id: a.coach?._id,
-                    name: a.coach ? `${a.coach.firstName || ''} ${a.coach.lastName || ''}`.trim() || "Coach" : "Unknown Coach",
-                    email: a.coach?.email
-                },
-                assignedAt: a.assignedAt
-            };
-        });
+        const programs = assignments
+            .filter(a => a.program) // Ensure program still exists
+            .map(a => {
+                const programObj = a.program.toObject();
+                return {
+                    ...programObj,
+                    assignmentId: a._id,
+                    coachInfo: {
+                        id: a.coach?._id,
+                        name: a.coach ? `${a.coach.firstName || ''} ${a.coach.lastName || ''}`.trim() || "Coach" : "Unknown Coach",
+                        email: a.coach?.email
+                    },
+                    assignedAt: a.assignedAt
+                };
+            });
         
         res.status(200).json({ success: true, data: programs });
     } catch (error) {

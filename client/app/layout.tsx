@@ -3,6 +3,7 @@ import './globals.css';
 
 import type { Metadata, Viewport } from 'next';
 import Providers from '@/components/shared/Providers';
+import BotpressChat from '@/components/BotpressChat';
 
 export const metadata: Metadata = {
   title: {
@@ -65,6 +66,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       >
         <Providers>
           {children}
+          <BotpressChat />
         </Providers>
       </body>
     </html>

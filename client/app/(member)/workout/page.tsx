@@ -11,6 +11,7 @@ import {
 import ExerciseBrowser from '@/components/workouts/ExerciseBrowser';
 import { workoutApi } from '@/lib/workoutApi';
 import { useGlobalStore } from '@/store/useGlobalStore';
+import { Toast } from '@/components/ui/Toast';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface DaySetting {
@@ -150,23 +151,6 @@ function Button({ children, onClick, variant = 'primary', className = '', disabl
             {loading && <Loader2 size={14} className="animate-spin mr-2" />}
             {children}
         </button>
-    );
-}
-
-// ─── Toast ─────────────────────────────────────────────────────────────────────
-function Toast({ message, type }: { message: string; type: 'success' | 'error' }) {
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 50, scale: 0.9 }}
-            className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-5 sm:px-6 py-3 rounded-2xl shadow-2xl backdrop-blur-lg text-xs sm:text-sm font-bold z-50 border whitespace-nowrap ${type === 'error'
-                ? 'border-red-500/50 bg-red-950/90 text-red-300'
-                : 'border-[#B8FF3C]/30 bg-slate-950/90 text-[#B8FF3C]'
-                }`}
-        >
-            {message}
-        </motion.div>
     );
 }
 
@@ -423,7 +407,7 @@ export default function WorkoutsPage() {
 
     // ── List View ──────────────────────────────────────────────────────────────
     const renderList = () => (
-        <motion.div key="list" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="flex flex-col gap-5 sm:gap-6">
+        <motion.div key="list" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="flex flex-col gap-5 sm:gap-6 pb-32">
             {/* Desktop header */}
             <div className="hidden sm:flex justify-between items-center">
                 <div>
@@ -454,9 +438,12 @@ export default function WorkoutsPage() {
 
             {/* Plan grid */}
             {loadingPlans ? (
-                <div className="py-20 flex flex-col items-center justify-center gap-4">
-                    <Loader2 className="animate-spin text-[#B8FF3C]" size={36} />
-                    <p className="text-slate-500 font-mono text-[10px] uppercase tracking-widest">Accessing Secure Vault...</p>
+                <div className="py-24 flex flex-col items-center justify-center gap-5">
+                    <div className="relative w-12 h-12">
+                        <div className="absolute inset-0 border-4 border-[#B8FF3C]/10 rounded-full" />
+                        <div className="absolute inset-0 border-4 border-[#B8FF3C] border-t-transparent rounded-full animate-spin" />
+                    </div>
+                    <p className="text-slate-500 font-mono text-[10px] uppercase tracking-[0.3em] font-black animate-pulse">Syncing Plans</p>
                 </div>
             ) : plans.length === 0 ? (
                 <div className="py-16 sm:py-20 text-center flex flex-col items-center bg-slate-900/30 border border-slate-800 border-dashed rounded-3xl">
@@ -484,37 +471,34 @@ export default function WorkoutsPage() {
                                 }`}
                             onClick={() => { setSelectedWorkout(plan); setView('detail'); }}
                         >
-                            <div className="flex justify-between items-start mb-3 sm:mb-4">
-                                <div className="flex-1 min-w-0 pr-2">
-                                    <h3 className="font-bold text-slate-100 text-sm sm:text-base group-hover:text-[#B8FF3C] transition-colors truncate">
+                            <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-black text-white text-lg sm:text-xl group-hover:text-[#B8FF3C] transition-colors truncate">
                                         {plan.title}
                                     </h3>
-                                    <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black mt-1">
-                                        {(plan.days || []).length} Days · {((plan.exercises || []).length + (plan.days || []).reduce((acc, d) => acc + (d.exercises || []).length, 0))} Movements
-                                    </p>
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                        <span className="text-[10px] font-black text-slate-500 bg-black/40 px-2 py-1 rounded-lg border border-white/5 uppercase tracking-wider">
+                                            {(plan.days || []).length} Days
+                                        </span>
+                                        <span className="text-[10px] font-black text-slate-600 bg-white/5 px-2 py-1 rounded-lg border border-white/5 uppercase tracking-wider">
+                                            {((plan.exercises || []).length + (plan.days || []).reduce((acc, d) => acc + (d.exercises || []).length, 0))} Skills
+                                        </span>
+                                    </div>
                                 </div>
                                 {plan.is_active && (
-                                    <span className="bg-[#B8FF3C] text-[#0A0A0F] text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider shrink-0">
-                                        Active
-                                    </span>
+                                    <div className="flex items-center gap-1.5 bg-[#B8FF3C] text-[#0A0A0F] text-[10px] font-black px-3 py-1.5 rounded-xl uppercase tracking-widest shadow-lg shadow-[#B8FF3C]/20 shrink-0">
+                                        <Zap size={10} fill="currentColor" /> Active
+                                    </div>
                                 )}
                             </div>
-                            <div className="flex gap-2 pt-3 sm:pt-4 border-t border-slate-800/60" onClick={e => e.stopPropagation()}>
+                            <div className="flex gap-3 pt-5 border-t border-white/5" onClick={e => e.stopPropagation()}>
                                 <Button
                                     variant={plan.is_active ? 'outline' : 'primary'}
-                                    className="flex-1 text-xs py-1.5 h-8 rounded-xl"
+                                    className="w-full flex items-center justify-center gap-2 h-11 rounded-xl text-[11px] font-black uppercase tracking-wider"
                                     onClick={() => plan._id && handleTogglePlan(plan._id, !!plan.is_active)}
                                     loading={isTogglingPlan === plan._id}
                                 >
-                                    {plan.is_active ? 'Deactivate' : 'Activate'}
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    className="px-2.5 h-8 text-red-500/40 hover:text-red-400 hover:bg-red-500/10 rounded-xl"
-                                    onClick={() => plan._id && handleDeletePlan(plan._id)}
-                                    loading={isDeletingPlan === plan._id}
-                                >
-                                    <Trash2 size={13} />
+                                    {plan.is_active ? 'Standby' : 'Engage'}
                                 </Button>
                             </div>
                         </motion.div>

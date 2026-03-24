@@ -12,8 +12,8 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'food_logs',
-    allowed_formats: ['jpg', 'png', 'jpeg'],
-    transformation: [{ width: 500, height: 500, crop: 'limit' }]
+    allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'heic', 'heif', 'avif'],
+    transformation: [{ width: 800, height: 800, crop: 'limit' }]
   }
 });
 

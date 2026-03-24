@@ -7,6 +7,7 @@ import {
     ArrowRight, ArrowLeft, Zap, User, Activity, Target, Dumbbell,
     ChevronDown, Check, Bell, BellOff, Sparkles, Camera
 } from "lucide-react";
+import { CustomSelect } from "@/components/ui/Select";
 
 interface MemberData {
     avatarUrl: string;
@@ -104,20 +105,6 @@ function Input({ label, ...props }: React.InputHTMLAttributes<HTMLInputElement> 
         </div>
     );
 }
-function Select({ label, options, ...props }: React.SelectHTMLAttributes<HTMLSelectElement> & { label: string; options: { value: string; label: string }[] }) {
-    return (
-        <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</label>
-            <div className="relative">
-                <select {...props} className="w-full bg-[#13131A] border border-white/8 rounded-xl px-4 py-3 text-white text-sm appearance-none focus:outline-none focus:border-[#B8FF3C]/50 transition-all pr-10">
-                    <option value="" disabled>Select…</option>
-                    {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
-            </div>
-        </div>
-    );
-}
 
 // ── Step 1 – Profile (avatar added here, rest unchanged) ──────────────────────
 function StepProfile({ data, onChange }: { data: MemberData; onChange: (d: Partial<MemberData>) => void }) {
@@ -152,8 +139,12 @@ function StepProfile({ data, onChange }: { data: MemberData; onChange: (d: Parti
             <Input label="Email" type="email" placeholder="alex@example.com" value={data.email} onChange={e => onChange({ email: e.target.value })} />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Input label="Date of Birth" type="date" value={data.dob} onChange={e => onChange({ dob: e.target.value })} />
-                <Select label="Gender" value={data.gender} onChange={e => onChange({ gender: e.target.value })}
-                    options={[{ value: "male", label: "Male" }, { value: "female", label: "Female" }, { value: "other", label: "Prefer not to say" }]} />
+                 <CustomSelect 
+                    label="Gender" 
+                    value={data.gender} 
+                    onChange={val => onChange({ gender: val })}
+                    options={[{ value: "male", label: "Male" }, { value: "female", label: "Female" }, { value: "other", label: "Prefer not to say" }]} 
+                />
             </div>
         </div>
     );
